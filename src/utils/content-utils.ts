@@ -1,7 +1,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
+
+const UNCATEGORIZED = "未分类";
 
 // // Retrieve posts and sort them by publication date
 async function getRawSortedPosts() {
@@ -85,8 +85,9 @@ export async function getCategoryList(): Promise<Category[]> {
 	const count: { [key: string]: number } = {};
 	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
 		if (!post.data.category) {
-			const ucKey = i18n(I18nKey.uncategorized);
-			count[ucKey] = count[ucKey] ? count[ucKey] + 1 : 1;
+			count[UNCATEGORIZED] = count[UNCATEGORIZED]
+				? count[UNCATEGORIZED] + 1
+				: 1;
 			return;
 		}
 

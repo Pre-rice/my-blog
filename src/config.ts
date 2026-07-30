@@ -102,6 +102,11 @@ export const profileConfig: ProfileConfig = {
 			url: "https://qm.qq.com/q/mAFwuP4Qrm",
 		},
 		{
+			name: "Email",
+			icon: "material-symbols:mail",
+			url: "mailto:prerice@qq.com",
+		},
+		{
 			name: "Bilibili",
 			icon: "fa6-brands:bilibili",
 			url: "https://space.bilibili.com/524853098",

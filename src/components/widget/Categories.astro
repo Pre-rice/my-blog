@@ -1,6 +1,4 @@
 ---
-import I18nKey from "../../i18n/i18nKey";
-import { i18n } from "../../i18n/translation";
 import { getCategoryList } from "../../utils/content-utils";
 import ButtonLink from "../control/ButtonLink.astro";
 import WidgetLayout from "./WidgetLayout.astro";
@@ -20,7 +18,7 @@ const className = Astro.props.class;
 const style = Astro.props.style;
 ---
 
-<WidgetLayout name={i18n(I18nKey.categories)} id="categories" isCollapsed={isCollapsed} collapsedHeight={COLLAPSED_HEIGHT}
+<WidgetLayout name="分类" id="categories" isCollapsed={isCollapsed} collapsedHeight={COLLAPSED_HEIGHT}
                 class={className} style={style}
 >
     {categories.map((c) =>

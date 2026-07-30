@@ -1,12 +1,10 @@
 <script lang="ts">
 import { onMount } from "svelte";
 
-import I18nKey from "../i18n/i18nKey";
-import { i18n } from "../i18n/translation";
 import { getPostUrlBySlug } from "../utils/url-utils";
 
-export let tags: string[];
-export let categories: string[];
+export let tags: string[] = [];
+export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +17,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-		category?: string;
+        category?: string | null;
 		published: Date;
 	};
 }
@@ -98,9 +96,9 @@ onMount(async () => {
                   -outline-offset-[2px] z-50 outline-3"
                     ></div>
                 </div>
-                <div class="w-[70%] md:w-[80%] transition text-left text-50">
-                    {group.posts.length} {i18n(group.posts.length === 1 ? I18nKey.postCount : I18nKey.postsCount)}
-                </div>
+                    <div class="w-[70%] md:w-[80%] transition text-left text-50">
+                        {group.posts.length} 篇文章
+                    </div>
             </div>
 
             {#each group.posts as post}
