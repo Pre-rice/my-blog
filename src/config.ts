@@ -1,3 +1,5 @@
+// 配置文件
+
 import type {
 	ExpressiveCodeConfig,
 	LicenseConfig,
@@ -19,7 +21,7 @@ export const siteConfig: SiteConfig = {
 	// 主题颜色
 	themeColor: {
 		hue: 250, // 主题颜色的默认色相（0-360）
-		fixed: false, // 是否对访客隐藏主题颜色选择器
+		fixed: true, // 是否对访客隐藏主题颜色选择器
 	},
 	// 网站顶部的横幅图片
 	banner: {
@@ -79,11 +81,7 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.About,
-		{
-			name: "GitHub",
-			url: "https://github.com/saicaca/fuwari", // 内部链接不应包含 base 路径，因为会自动添加
-			external: true, // 显示外部链接图标，并将在新标签页中打开
-		},
+    	LinkPreset.Links,
 	],
 };
 
