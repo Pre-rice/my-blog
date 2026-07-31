@@ -20,17 +20,17 @@
     }
 
     a:not(.no-styling) {
-        @apply relative bg-none link font-medium text-[var(--primary)]
+        @apply relative bg-none font-medium text-[var(--primary)]
         underline decoration-[var(--link-underline)] decoration-1 decoration-dashed underline-offset-4;
         box-decoration-break: clone;
         -webkit-box-decoration-break: clone;
-        display: inline-block;
-    
+
+        /* hover 时下划线保持原位置、原颜色，仅背景高亮 */
         &:hover, &:active {
-            @apply decoration-transparent;
             background: var(--btn-plain-bg-hover);
-            border-bottom: 1px dashed var(--link-hover);
-            text-decoration: none;
+            /* 背景块高度：上下 0.15em / 左右 0.2em，可按需微调 */
+            padding: 0.15em 0.2em;
+            margin: -0.15em -0.2em;
         }
     }
 

@@ -2,6 +2,7 @@
 import { getEntry, render } from "astro:content";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
+import Comments from '@components/widget/Comments.svelte'
 
 const linksPost = await getEntry("spec", "links");
 
@@ -96,4 +97,8 @@ const items = [
             </Markdown>
         </div>
     </div>
+    
+<br>
+<Comments client:only="svelte"></Comments>
+
 </MainGridLayout>

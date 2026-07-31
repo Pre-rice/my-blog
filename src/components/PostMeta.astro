@@ -12,6 +12,12 @@ interface Props {
 	category: string | null;
 	hideTagsForMobile?: boolean;
 	hideUpdateDate?: boolean;
+	/** 仅显示基础元信息（日期/分类/词数），隐藏标签（由卡片底部自行渲染标签） */
+	showOnlyBasicMeta?: boolean;
+	/** 词数 */
+	words?: number;
+	/** 是否显示词数（分类右侧） */
+	showWordCount?: boolean;
 }
 const {
 	published,
@@ -20,6 +26,9 @@ const {
 	category,
 	hideTagsForMobile = false,
 	hideUpdateDate = false,
+	showOnlyBasicMeta = false,
+	words,
+	showWordCount = false,
 } = Astro.props;
 const className = Astro.props.class;
 ---
@@ -60,7 +69,18 @@ const className = Astro.props.class;
         </div>
     </div>
 
+    <!-- word count（分类右侧） -->
+    {showWordCount && words && (
+        <div class="flex items-center">
+            <div class="meta-icon">
+                <Icon name="material-symbols:article-outline-rounded" class="text-xl"></Icon>
+            </div>
+            <span class="text-50 text-sm font-medium">{words} 字</span>
+        </div>
+    )}
+
     <!-- tags -->
+    {!showOnlyBasicMeta && (
     <div class:list={["items-center", {"flex": !hideTagsForMobile, "hidden md:flex": hideTagsForMobile}]}>
         <div class="meta-icon"
         >
@@ -78,4 +98,5 @@ const className = Astro.props.class;
             {!(tags && tags.length > 0) && <div class="transition text-50 text-sm font-medium">暂无标签</div>}
         </div>
     </div>
+    )}
 </div>

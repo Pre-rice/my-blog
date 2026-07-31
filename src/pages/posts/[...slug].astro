@@ -11,6 +11,7 @@ import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
+import Comments from '@components/widget/Comments.svelte'
 
 export async function getStaticPaths() {
 	const blogEntries = await getSortedPosts();
@@ -128,5 +129,8 @@ const jsonLd = {
             </div>}
         </a>
     </div>
+
+<br>
+<Comments client:only="svelte"></Comments>
 
 </MainGridLayout>

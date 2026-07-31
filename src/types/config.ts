@@ -1,10 +1,14 @@
 import type { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants";
+import type { Song } from "./music";
 
 export type SiteConfig = {
 	title: string;
 	subtitle: string;
 
 	lang: string;
+
+	// 站点开始日期（用于站点信息统计运行天数）
+	siteStartDate?: string;
 
 	themeColor: {
 		hue: number;
@@ -90,4 +94,54 @@ export type BlogPostData = {
 
 export type ExpressiveCodeConfig = {
 	theme: string;
+};
+
+/* ─── Mizuki 风格三栏布局与音乐播放器 ─────────────────────────── */
+
+export type WidgetComponentType =
+	| "profile"
+	| "tags"
+	| "toc"
+	| "site-stats"
+	| "categories"
+	| "music-sidebar";
+
+export type SidebarLayoutConfig = {
+	/** 左右侧栏各自包含的组件列表（按显示顺序排列） */
+	components: {
+		left: WidgetComponentType[];
+		right: WidgetComponentType[];
+	};
+};
+
+export type MusicPlayerMode = "local" | "meting";
+
+/** 本地播放列表条目：id 与 url 必填，其余字段留空或省略则构建时自动识别 */
+export type LocalPlaylistEntry = {
+	/** 歌曲 id（需唯一） */
+	id: number;
+	/** 音频文件路径（相对 /public，如 music/url/xxx.mp3）；也可填在线地址 */
+	url: string;
+	/** 歌曲标题；留空或省略则构建时从音频元数据自动识别 */
+	title?: string;
+	/** 歌手；留空或省略则自动识别 */
+	artist?: string;
+	/** 封面路径（相对 /public，如 music/cover/xxx.jpg）；留空或省略则自动提取音频内嵌封面 */
+	cover?: string;
+	/** 时长（秒）；0 或省略则自动读取 */
+	duration?: number;
+};
+
+
+export type MusicPlayerConfig = {
+	/** 是否启用音乐播放器 */
+	enable: boolean;
+	/** 播放器模式：local 本地文件 / meting API 在线歌单 */
+	mode: MusicPlayerMode;
+	/** 歌单 ID（仅 meting 模式） */
+	id?: string;
+	/** 本地播放列表（local 模式）：留空时构建时自动扫描 /public/music/url/ 目录并识别元数据；条目仅作为覆盖项 */
+	localPlaylist?: LocalPlaylistEntry[];
+	/** 默认占位歌曲（播放前显示） */
+	defaultSong?: Song;
 };

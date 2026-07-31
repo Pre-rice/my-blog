@@ -3,8 +3,10 @@
 import type {
 	ExpressiveCodeConfig,
 	LicenseConfig,
+	MusicPlayerConfig,
 	NavBarConfig,
 	ProfileConfig,
+	SidebarLayoutConfig,
 	SiteConfig,
 } from "./types/config";
 import { LinkPreset } from "./types/config";
@@ -16,8 +18,9 @@ import { LinkPreset } from "./types/config";
 export const siteConfig: SiteConfig = {
 	// 基础设置
 	title: "Pre-rice 的个人博客",
-	subtitle: "主页",
+	subtitle: "",
 	lang: "zh_CN",
+	siteStartDate: "2026-07-30",
 	// 主题颜色
 	themeColor: {
 		hue: 250, // 主题颜色的默认色相（0-360）
@@ -134,4 +137,135 @@ export const licenseConfig: LicenseConfig = {
 export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// 注意：部分样式（如背景颜色）被覆盖，请参见 astro.config.mjs 文件
 	theme: "github-dark",
+};
+
+/**
+ * 侧栏布局配置（Mizuki 风格三栏布局）
+ * 只需配置左右侧栏包含的组件及其顺序；位置（top/sticky）与动画行为由代码自动处理。
+ */
+export const sidebarLayoutConfig: SidebarLayoutConfig = {
+	components: {
+		left: ["profile", "tags", "toc"],
+		right: ["site-stats", "categories", "music-sidebar"],
+	},
+};
+
+/**
+ * 音乐播放器配置
+ *
+ * mode:
+ *  - "local": 播放本地音频文件（自动扫描 /public/music/url/，localPlaylist 可选覆盖）
+ *  - "meting": 通过 Meting API 拉取在线歌单（需配置 id）
+ */
+export const musicPlayerConfig: MusicPlayerConfig = {
+	// 是否启用音乐播放器功能
+	enable: true,
+	// 播放器模式：local 本地文件 / meting 在线歌单
+	mode: "local",
+	// 歌单 ID（仅 meting 模式生效）
+	id: "14164869977",
+	// 本地播放列表（local 模式）：
+	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
+	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
+	// 同 url 的条目中已填写的字段优先，未填写的字段仍会从音频元数据自动识别。
+	// 示例：{ id: 1, url: "music/url/xxx.mp3", title: "自定义标题", artist: "自定义歌手" }
+	localPlaylist: [
+	{
+		id: 1,
+		title: "再见，朋友 (Farewell, My Friend!)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/再见，朋友 (Farewell, My Friend!).mp3",
+		duration: 266,
+	},
+	{
+		id: 2,
+		title: "向尖顶攀升的俯冲 (Ascending Dive Towards the Pyramidion)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/向尖顶攀升的俯冲 (Ascending Dive Towards the Pyramidion).mp3",
+		duration: 332,
+	},
+	{
+		id: 3,
+		title: "向着地图上的空白 (Towards the Blanks on the Map)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/向着地图上的空白 (Towards the Blanks on the Map).mp3",
+		duration: 193,
+	},
+	{
+		id: 4,
+		title: "回忆 (Reminiscence)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/回忆 (Reminiscence).mp3",
+		duration: 189,
+	},
+	{
+		id: 5,
+		title: "天空的指环 (Ring of the Sky)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/天空的指环 (Ring of the Sky).mp3",
+		duration: 325,
+	},
+	{
+		id: 6,
+		title: "幻想乐园 (Welcome to Fantasyland!)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/幻想乐园 (Welcome to Fantasyland!).mp3",
+		duration: 183,
+	},
+	{
+		id: 7,
+		title: "新的旅程 (A New Journey)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/新的旅程 (A New Journey).mp3",
+		duration: 115,
+	},
+	{
+		id: 8,
+		title: "永夜之城的轮舞 (Circle Dance of the Evernight Castle)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/永夜之城的轮舞 (Circle Dance of the Evernight Castle).mp3",
+		duration: 374,
+	},
+	{
+		id: 9,
+		title: "海与月的女儿 (Daughter of the Sea and the Moon)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/海与月的女儿 (Daughter of the Sea and the Moon).mp3",
+		duration: 386,
+	},
+	{
+		id: 10,
+		title: "花与罪的无限回廊 (Infinite Cloister of Flowers and Sins)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/花与罪的无限回廊 (Infinite Cloister of Flowers and Sins).mp3",
+		duration: 387,
+	},
+	{
+		id: 11,
+		title: "雪融之境的繁光 (Flourishing Lights of the Snowmelt Realm)",
+		artist: "陈致逸",
+		cover: "music/cover/幻想乐园 Fantasyland.jpg",
+		url: "music/url/雪融之境的繁光 (Flourishing Lights of the Snowmelt Realm).mp3",
+		duration: 421,
+	},
+	],
+	// 默认占位歌曲（播放前显示）
+	defaultSong: {
+		title: "尚未播放",
+		artist: "从侧栏播放器开始",
+		cover: "/favicon/favicon.svg",
+		url: "",
+		duration: 0,
+		id: 0,
+	},
 };

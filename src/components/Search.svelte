@@ -2,7 +2,7 @@
 <script lang="ts">
 import Icon from "@iconify/svelte";
 import { url } from "@utils/url-utils.ts";
-import { onMount } from "svelte";
+import { onDestroy, onMount } from "svelte";
 import type { SearchResult } from "@/global";
 
 let keywordDesktop = "";
@@ -11,6 +11,10 @@ let result: SearchResult[] = [];
 let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
+let isDesktopSearchExpanded = false;
+let blurTimer: ReturnType<typeof setTimeout>;
+let focusTimer: ReturnType<typeof setTimeout>;
+let windowJustFocused = false;
 
 const fakeResult: SearchResult[] = [
 	{
@@ -44,6 +48,36 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 	} else {
 		panel.classList.add("float-panel-closed");
 	}
+};
+
+const toggleDesktopSearch = () => {
+	// 如果窗口刚获得焦点，不自动展开搜索框
+	if (windowJustFocused) {
+		return;
+	}
+	isDesktopSearchExpanded = !isDesktopSearchExpanded;
+	if (isDesktopSearchExpanded) {
+		setTimeout(() => {
+			const input = document.getElementById(
+				"search-input-desktop",
+			) as HTMLInputElement | null;
+			input?.focus();
+		}, 0);
+	}
+};
+
+const collapseDesktopSearch = () => {
+	if (!keywordDesktop) {
+		isDesktopSearchExpanded = false;
+	}
+};
+
+const handleBlur = () => {
+	// 延迟处理以允许搜索结果的点击事件先于折叠逻辑执行
+	blurTimer = setTimeout(() => {
+		isDesktopSearchExpanded = false;
+		setPanelVisibility(false, true);
+	}, 200);
 };
 
 const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
@@ -122,6 +156,25 @@ onMount(() => {
 			}
 		}, 2000); // Adjust timeout as needed
 	}
+
+	// 监听窗口焦点事件，防止切换窗口时自动展开搜索框
+	const handleFocus = () => {
+		windowJustFocused = true;
+		clearTimeout(focusTimer);
+		focusTimer = setTimeout(() => {
+			windowJustFocused = false;
+		}, 500); // 500ms 后才允许 mouseenter 触发展开
+	};
+	window.addEventListener("focus", handleFocus);
+
+	return () => {
+		window.removeEventListener("focus", handleFocus);
+	};
+});
+
+onDestroy(() => {
+	clearTimeout(blurTimer);
+	clearTimeout(focusTimer);
 });
 
 $: if (initialized && keywordDesktop) {
@@ -137,16 +190,55 @@ $: if (initialized && keywordMobile) {
 }
 </script>
 
-<!-- search bar for desktop view -->
-<div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
-      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
-      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
-">
-    <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-	<input placeholder="搜索" bind:value={keywordDesktop} on:focus={() => search(keywordDesktop, true)}
-           class="transition-all pl-10 text-sm bg-transparent outline-0
-         h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
-    >
+<!-- search bar for desktop view（默认折叠为图标，hover 时展开输入框） -->
+<div class="hidden lg:block relative w-11 h-11 shrink-0">
+	<button
+		id="search-bar"
+		class:expanded={isDesktopSearchExpanded}
+		class="flex transition-all duration-500 items-center h-11 rounded-lg absolute right-0 top-0 shrink-0 border-0 bg-transparent cursor-pointer overflow-hidden
+            {isDesktopSearchExpanded
+				? "w-48 bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10"
+				: "w-11 hover:bg-black/[0.06] dark:hover:bg-white/10"}
+        "
+		aria-label="搜索"
+		on:mouseenter={() => {
+			if (!isDesktopSearchExpanded) {
+				toggleDesktopSearch();
+			}
+		}}
+		on:mouseleave={collapseDesktopSearch}
+		on:click={() => {
+			const input = document.getElementById(
+				"search-input-desktop",
+			) as HTMLInputElement | null;
+			input?.focus();
+		}}
+	>
+		<!-- 图标固定不动，input 从图标右侧恒定距离处随按钮宽度展开 -->
+		<Icon
+			icon="material-symbols:search"
+			class="shrink-0 text-[1.25rem] pointer-events-none ml-3 transition-colors duration-500 {isDesktopSearchExpanded
+				? "text-black/30 dark:text-white/30"
+				: "text-black/75 dark:text-white/75"}"
+		></Icon>
+		<input
+			id="search-input-desktop"
+			placeholder="搜索"
+			bind:value={keywordDesktop}
+			on:focus={() => {
+				clearTimeout(blurTimer);
+				if (!isDesktopSearchExpanded) {
+					toggleDesktopSearch();
+				}
+				search(keywordDesktop, true);
+			}}
+			on:blur={handleBlur}
+			class="transition-all duration-500 min-w-0 pl-2 text-sm bg-transparent outline-0
+                h-full flex-1 {isDesktopSearchExpanded
+				? "opacity-100"
+				: "opacity-0 pointer-events-none"} text-black/50 dark:text-white/50"
+		/>
+	</button>
 </div>
 
 <!-- toggle btn for phone/tablet view -->
@@ -194,4 +286,5 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
     max-height: calc(100vh - 100px);
     overflow-y: auto;
   }
+
 </style>

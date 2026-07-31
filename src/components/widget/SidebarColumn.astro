@@ -1,0 +1,97 @@
+---
+// 通用侧栏列渲染器：根据 side（left/right）从 widget-manager 获取组件配置并渲染
+import type { MarkdownHeading } from "astro";
+import type { AstroComponentFactory } from "astro/runtime/server/index.js";
+import type { WidgetComponentType } from "../../types/config";
+
+import { widgetManager } from "../../utils/widget-manager";
+import Categories from "./Categories.astro";
+import MusicSidebarWidget from "./music-sidebar/MusicSidebarWidget.astro";
+import Profile from "./Profile.astro";
+import SiteStats from "./SiteStats.astro";
+import Tags from "./Tags.astro";
+import TOC from "./TOC.astro";
+
+interface Props {
+	side: "left" | "right";
+	headings?: MarkdownHeading[];
+	containerId?: string;
+	stickyId?: string;
+	rootClass?: string;
+}
+
+const {
+	side,
+	headings,
+	containerId = side === "right" ? "right-sidebar" : "sidebar",
+	stickyId =
+		side === "right" ? "right-sidebar-sticky" : "sidebar-sticky",
+	rootClass = "w-full",
+} = Astro.props;
+
+const topComponents = widgetManager.getComponents(side, "top");
+const stickyComponents = widgetManager.getComponents(side, "sticky");
+
+const componentMap: Record<string, AstroComponentFactory> = {
+	profile: Profile,
+	tags: Tags,
+	toc: TOC,
+	"site-stats": SiteStats,
+	categories: Categories,
+	"music-sidebar": MusicSidebarWidget,
+};
+
+function renderComponent(
+	componentType: WidgetComponentType,
+	index: number,
+): { Component: AstroComponentFactory; props: Record<string, unknown> } | null {
+	const ComponentToRender = componentMap[componentType];
+	if (!ComponentToRender) {
+		return null;
+	}
+
+	return {
+		Component: ComponentToRender,
+		props: {
+			class: widgetManager.getComponentClass(),
+			style: widgetManager.getComponentStyle(index),
+			headings,
+		},
+	};
+}
+
+function renderComponentList(
+	components: WidgetComponentType[],
+): { Component: AstroComponentFactory; props: Record<string, unknown> }[] {
+	return components
+		.map((componentType, index) => renderComponent(componentType, index))
+		.filter(
+			(
+				renderData,
+			): renderData is {
+				Component: AstroComponentFactory;
+				props: Record<string, unknown>;
+			} => renderData !== null,
+		);
+}
+
+const topRenders = renderComponentList(topComponents);
+const stickyRenders = renderComponentList(stickyComponents);
+---
+
+<div id={containerId} class:list={[rootClass, "sidebar-column-root"]}>
+	<div class="flex flex-col w-full gap-4 mb-4">
+		{topRenders.map(({ Component, props }) => (
+			<Component {...props} />
+		))}
+	</div>
+
+	<div
+		id={stickyId}
+		class="transition-all duration-700 flex flex-col w-full gap-4 sticky top-4 sidebar-sticky-column"
+	>
+		{stickyRenders.map(({ Component, props }) => (
+			<Component {...props} />
+		))}
+	</div>
+</div>

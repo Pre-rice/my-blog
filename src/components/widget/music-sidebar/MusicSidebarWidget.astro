@@ -1,0 +1,16 @@
+---
+import { musicPlayerConfig } from "../../../config";
+import WidgetLayout from "../WidgetLayout.astro";
+import SidebarMusicClient from "./SidebarMusicClient.svelte";
+import type { SidebarMusicWidgetProps } from "./types";
+
+const { class: className, style }: SidebarMusicWidgetProps = Astro.props;
+---
+
+{
+	musicPlayerConfig.enable && (
+		<WidgetLayout id="music-sidebar" class={className} style={style} name="音乐">
+			<SidebarMusicClient client:only="svelte" />
+		</WidgetLayout>
+	)
+}

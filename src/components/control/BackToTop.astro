@@ -2,10 +2,15 @@
 import { Icon } from "astro-icon/components";
 ---
 
-<!-- There can't be a filter on parent element, or it will break `fixed` -->
+<!-- 右下角浮动按钮组：返回主页（非主页且滚动时显示）+ 返回顶部 -->
 <div class="back-to-top-wrapper hidden lg:block">
-    <div id="back-to-top-btn" class="back-to-top-btn hide flex items-center rounded-2xl overflow-hidden transition" onclick="backToTop()">
-        <button aria-label="Back to Top" class="btn-card h-[3.75rem] w-[3.75rem]">
+    <div id="back-to-home-btn" class="floating-btn hide" onclick="backToHome()">
+        <button aria-label="返回主页" class="btn-card h-full w-full">
+            <Icon name="material-symbols:home-outline-rounded" class="mx-auto"></Icon>
+        </button>
+    </div>
+    <div id="back-to-top-btn" class="floating-btn hide" onclick="backToTop()">
+        <button aria-label="返回顶部" class="btn-card h-full w-full">
             <Icon name="material-symbols:keyboard-arrow-up-rounded" class="mx-auto"></Icon>
         </button>
     </div>
@@ -13,37 +18,59 @@ import { Icon } from "astro-icon/components";
 
 <style lang="stylus">
 .back-to-top-wrapper
-    width: 3.75rem
-    height: 3.75rem
-    position: absolute
-    right: 0
-    top: 0
+    position: fixed
+    right: 3rem     /* 水平位置，可按需微调 */
+    bottom: 5rem      /* 垂直位置（越小越靠下），可按需微调 */
+    z-index: 40
+    width: 3rem
+    height: 6.5rem
     pointer-events: none
 
-.back-to-top-btn
+.floating-btn
     color: var(--primary)
-    font-size: 2.25rem
+    font-size: 1.6rem
     font-weight: bold
-    border: none
-    position: fixed
-    bottom: 10rem
+    position: absolute
+    right: 0
+    width: 3rem
+    height: 3rem
     opacity: 1
     cursor: pointer
-    transform: translateX(5rem)
     pointer-events: auto
-    i
-        font-size: 1.75rem
+    transition: opacity 0.3s ease, transform 0.3s ease
+    border-radius: 1rem
+    border: 1px solid rgba(148, 163, 184, 0.45)
+    overflow: hidden
+
+    svg
+        font-size: 1.6rem
+
     &.hide
-        transform: translateX(5rem) scale(0.9)
         opacity: 0
         pointer-events: none
-    &:active
-      transform: translateX(5rem) scale(0.9)
 
+    &:active
+        transform: scale(0.9)
+
+    &:first-child
+        bottom: 3.5rem
+
+    &:last-child
+        bottom: 0
+
+:global(.dark) .floating-btn
+    border-color: rgba(255, 255, 255, 0.15)
 </style>
 
 <script is:raw is:inline>
 function backToTop() {
     window.scroll({ top: 0, behavior: 'smooth' });
+}
+function backToHome() {
+    if (window.swup) {
+        window.swup.navigate('/');
+    } else {
+        window.location.href = '/';
+    }
 }
 </script>

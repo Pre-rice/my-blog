@@ -51,7 +51,10 @@ let pageTitle: string;
 if (title) {
 	pageTitle = `${title} - ${siteConfig.title}`;
 } else {
-	pageTitle = `${siteConfig.title} - ${siteConfig.subtitle}`;
+	// subtitle 留空时不显示连字符
+	pageTitle = siteConfig.subtitle
+		? `${siteConfig.title} - ${siteConfig.subtitle}`
+		: siteConfig.title;
 }
 
 const favicons: Favicon[] = siteConfig.favicon;
@@ -69,6 +72,8 @@ const bannerOffsetByPosition = {
 };
 const bannerOffset =
 	bannerOffsetByPosition[siteConfig.banner.position || "center"];
+
+import { SEO } from "astro-seo";
 ---
 
 <!DOCTYPE html>
@@ -76,6 +81,8 @@ const bannerOffset =
 	  data-overlayscrollbars-initialize
 >
 	<head>
+
+		<SEO title={pageTitle} description={description || pageTitle}/>
 
 		<title>{pageTitle}</title>
 
@@ -412,17 +419,13 @@ const setup = () => {
 		} else {
 			bodyElement!.classList.remove('lg:is-home');
 		}
+		// 同步返回主页/返回顶部按钮的显示状态
+		scrollFunction();
 
 		// increase the page height during page transition to prevent the scrolling animation from jumping
 		const heightExtend = document.getElementById('page-height-extend')
 		if (heightExtend) {
 			heightExtend.classList.remove('hidden')
-		}
-
-		// Hide the TOC while scrolling back to top
-		let toc = document.getElementById('toc-wrapper');
-		if (toc) {
-			toc.classList.add('toc-not-ready')
 		}
 	});
 	window.swup.hooks.on('page:view', () => {
@@ -438,12 +441,6 @@ const setup = () => {
 			if (heightExtend) {
 				heightExtend.classList.add('hidden')
 			}
-
-            // Just make the transition looks better
-            const toc = document.getElementById('toc-wrapper');
-            if (toc) {
-                toc.classList.remove('toc-not-ready')
-            }
         }, 200)
 	});
 }
@@ -454,25 +451,20 @@ if (window?.swup?.hooks) {
 }
 
 let backToTopBtn = document.getElementById('back-to-top-btn');
-let toc = document.getElementById('toc-wrapper');
+let backToHomeBtn = document.getElementById('back-to-home-btn');
 let navbar = document.getElementById('navbar-wrapper')
 function scrollFunction() {
 	let bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100)
+	const isScrolledPastBanner = document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight
 
 	if (backToTopBtn) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
-			backToTopBtn.classList.remove('hide')
-		} else {
-			backToTopBtn.classList.add('hide')
-		}
+		backToTopBtn.classList.toggle('hide', !isScrolledPastBanner)
 	}
 
-	if (bannerEnabled && toc) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
-			toc.classList.remove('toc-hide')
-		} else {
-			toc.classList.add('toc-hide')
-		}
+	// 返回主页按钮：仅在非主页且返回顶部按钮出现时显示
+	if (backToHomeBtn) {
+		const isHome = document.body.classList.contains('lg:is-home')
+		backToHomeBtn.classList.toggle('hide', !isScrolledPastBanner || isHome)
 	}
 
 	if (!bannerEnabled) return
@@ -493,6 +485,7 @@ function scrollFunction() {
 	}
 }
 window.onscroll = scrollFunction
+scrollFunction()
 
 window.onresize = () => {
 	// calculate the --banner-height-extend, which needs to be a multiple of 4 to avoid blurry text
