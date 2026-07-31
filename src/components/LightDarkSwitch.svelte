@@ -1,3 +1,4 @@
+<!-- 主题切换组件 -->
 <script lang="ts">
 import { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants.ts";
 import Icon from "@iconify/svelte";

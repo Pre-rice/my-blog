@@ -1,3 +1,4 @@
+<!-- 归档面板组件 -->
 <script lang="ts">
 import { onMount } from "svelte";
 
