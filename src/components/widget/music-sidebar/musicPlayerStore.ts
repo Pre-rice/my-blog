@@ -5,7 +5,7 @@ import {
 	DEFAULT_METING_SERVER,
 	DEFAULT_METING_TYPE,
 	ERROR_DISPLAY_DURATION,
-	SKIP_ERROR_DELAY,
+	LOAD_TIMEOUT_MS,
 	STORAGE_KEY_VOLUME,
 } from "../../../constants/music";
 import type { RepeatMode, Song } from "../../../types/music";
@@ -61,6 +61,10 @@ class MusicPlayerStore {
 	private isInitialized = false;
 	private unregisterInteraction: (() => void) | undefined;
 	private listeners = new Set<(state: MusicPlayerState) => void>();
+	/** 歌曲加载超时定时器（坏链接可能不触发 error 而无限缓冲） */
+	private loadTimer: ReturnType<typeof setTimeout> | null = null;
+	/** 最近播放过的歌曲 url 窗口（容量=歌单长度的一半）：随机选歌时跳过窗口内的歌，避免很快重复 */
+	private recentPlayed: string[] = [];
 
 	constructor() {
 		this.state = this.createInitialState();
@@ -148,6 +152,10 @@ class MusicPlayerStore {
 			this.broadcastState();
 		});
 
+		// 加载就绪或开始播放即视为成功，取消超时兜底
+		this.audio.addEventListener("canplay", () => this.clearLoadTimer());
+		this.audio.addEventListener("playing", () => this.clearLoadTimer());
+
 		this.audio.addEventListener("timeupdate", () => {
 			if (this.audio) {
 				this.state.currentTime = this.audio.currentTime;
@@ -156,6 +164,7 @@ class MusicPlayerStore {
 		});
 
 		this.audio.addEventListener("loadedmetadata", () => {
+			this.clearLoadTimer();
 			if (this.audio?.duration) {
 				this.state.duration = this.audio.duration;
 			}
@@ -174,6 +183,7 @@ class MusicPlayerStore {
 		});
 
 		this.audio.addEventListener("error", () => {
+			this.clearLoadTimer();
 			this.handleAudioError();
 		});
 	}
@@ -224,18 +234,88 @@ class MusicPlayerStore {
 		this.state.autoplayFailed = true;
 
 		const song = this.state.currentSong;
-		this.showError(`歌曲「${song.title}」加载失败，即将播放下一首`);
-
-		// 延迟后自动切到下一首
-		setTimeout(() => {
-			if (!this.state.currentSong.url) return;
-			if (this.state.playlist.length > 1) {
-				this.next();
-			} else {
-				this.state.isPlaying = false;
-				this.broadcastState();
+		// 从播放列表中剔除无法播放的歌曲（按 url 匹配）
+		const failedIndex = this.state.playlist.findIndex((s) => s.url === song.url);
+		if (failedIndex !== -1) {
+			this.state.playlist.splice(failedIndex, 1);
+			// 被剔除的位置在当前播放位置之前时，当前下标前移一位保持指向同一首
+			if (failedIndex < this.state.currentIndex) {
+				this.state.currentIndex -= 1;
 			}
-		}, SKIP_ERROR_DELAY);
+			// 窗口方案无固定队列，无需重洗；清掉窗口内已失效的歌
+			this.recentPlayed = this.recentPlayed.filter((u) =>
+				this.state.playlist.some((s) => s.url === u),
+			);
+			// 歌单变短后窗口容量（歌单一半）同步收缩
+			const cap = Math.max(1, Math.floor(this.state.playlist.length / 2));
+			if (this.recentPlayed.length > cap) {
+				this.recentPlayed.splice(0, this.recentPlayed.length - cap);
+			}
+		}
+
+		this.showError(`歌曲「${song.title}」无法播放，已从列表移除`);
+
+		// 立即切到下一首：随机模式继续从窗口外随机选，顺序模式接列表的下一首
+		if (this.state.playlist.length > 0) {
+			if (this.state.isShuffled) {
+				this.playIndex(this.nextShuffledIndex());
+			} else {
+				this.playIndex(
+					Math.min(this.state.currentIndex, this.state.playlist.length - 1),
+				);
+			}
+		} else {
+			this.state.isPlaying = false;
+			this.state.currentTime = 0;
+			this.audio?.pause();
+			this.broadcastState();
+		}
+	}
+
+	/** 清除加载超时定时器 */
+	private clearLoadTimer(): void {
+		if (this.loadTimer !== null) {
+			clearTimeout(this.loadTimer);
+			this.loadTimer = null;
+		}
+	}
+
+	/** 记录一首歌为"最近播放"：窗口满后淘汰最旧的（容量=歌单长度的一半） */
+	private rememberPlayed(song: Song): void {
+		const url = song.url;
+		if (!url) return;
+		// 若该歌已在窗口内则刷新其"最近"位置，避免重复占用窗口
+		this.recentPlayed = this.recentPlayed.filter((u) => u !== url);
+		this.recentPlayed.push(url);
+		const cap = Math.max(1, Math.floor(this.state.playlist.length / 2));
+		if (this.recentPlayed.length > cap) {
+			this.recentPlayed.shift();
+		}
+	}
+
+	/** 取随机播放的下一首下标：从"最近播放窗口"之外随机选，保证同一首歌不会很快再次播放 */
+	private nextShuffledIndex(): number {
+		const n = this.state.playlist.length;
+		if (n <= 1) {
+			return 0;
+		}
+		// 候选 = 不在最近播放窗口内、且不是当前正在播的歌
+		const candidates = this.state.playlist
+			.map((song, i) => ({ song, i }))
+			.filter(
+				({ song, i }) =>
+					i !== this.state.currentIndex &&
+					!this.recentPlayed.includes(song.url),
+			)
+			.map(({ i }) => i);
+		// 退化情况（窗口覆盖全部歌曲）回退到全列表随机
+		const pool =
+			candidates.length > 0
+				? candidates
+				: this.state.playlist
+						.map((_, i) => i)
+						.filter((i) => i !== this.state.currentIndex);
+		return pool[Math.floor(Math.random() * pool.length)];
 	}
 
 	private registerInteractionHandler(): void {
@@ -309,10 +389,10 @@ class MusicPlayerStore {
 
 	private async loadMetingPlaylist(): Promise<void> {
 		try {
-			const api = DEFAULT_METING_API;
+			const api = musicPlayerConfig.api || DEFAULT_METING_API;
 			const url = api
-				.replace(":server", DEFAULT_METING_SERVER)
-				.replace(":type", DEFAULT_METING_TYPE)
+				.replace(":server", musicPlayerConfig.server || DEFAULT_METING_SERVER)
+				.replace(":type", musicPlayerConfig.type || DEFAULT_METING_TYPE)
 				.replace(":id", musicPlayerConfig.id || DEFAULT_METING_ID)
 				.replace(":auth", "123")
 				.replace(":r", String(Date.now()));
@@ -327,7 +407,8 @@ class MusicPlayerStore {
 				? data.map((item: Record<string, unknown>, index: number) => ({
 						id: Number(item.id) || index + 1,
 						title: String(item.title || "未知歌曲"),
-						artist: String(item.artist || "未知歌手"),
+						// Meting API 的歌手字段为 author（如 api.i-meto.com），兼容两种写法
+						artist: String(item.artist || item.author || "未知歌手"),
 						cover: String(item.pic || item.cover || ""),
 						url: String(item.url || ""),
 						duration: Number(item.duration) || 0,
@@ -358,10 +439,20 @@ class MusicPlayerStore {
 		this.state.autoplayFailed = false;
 		this.state.errorMessage = "";
 		this.state.showError = false;
+		// 记入最近播放窗口（自动切歌、手动点歌都算）
+		this.rememberPlayed(song);
 		this.broadcastState();
 
 		this.audio.src = song.url;
 		this.audio.load();
+
+		// 加载超时兜底：部分坏链接不触发 error 而是无限缓冲，超时后按失败剔除
+		this.clearLoadTimer();
+		this.loadTimer = setTimeout(() => {
+			if (this.state.isLoading && this.state.currentSong.url) {
+				this.handleAudioError();
+			}
+		}, LOAD_TIMEOUT_MS);
 
 		if (autoplay) {
 			const playPromise = this.audio.play();
@@ -456,17 +547,8 @@ class MusicPlayerStore {
 		if (!this.state.playlist.length) return;
 
 		if (this.state.isShuffled) {
-			// 随机播放
-			const randomIndex = Math.floor(
-				Math.random() * this.state.playlist.length,
-			);
-			if (randomIndex === this.state.currentIndex) {
-				if (this.state.playlist.length > 1) {
-					this.playIndex((randomIndex + 1) % this.state.playlist.length);
-				}
-			} else {
-				this.playIndex(randomIndex);
-			}
+			// 随机播放：从"最近播放窗口"之外随机选一首
+			this.playIndex(this.nextShuffledIndex());
 			return;
 		}
 
@@ -600,6 +682,7 @@ class MusicPlayerStore {
 	}
 
 	destroy(): void {
+		this.clearLoadTimer();
 		if (this.unregisterInteraction) {
 			this.unregisterInteraction();
 		}

@@ -12,9 +12,12 @@ let isSearching = false;
 let pagefindLoaded = false;
 let initialized = false;
 let isDesktopSearchExpanded = false;
-let blurTimer: ReturnType<typeof setTimeout>;
 let focusTimer: ReturnType<typeof setTimeout>;
 let windowJustFocused = false;
+// 点击清空按钮后，鼠标移出搜索框也不再收起（直到用户点击外部）
+let suppressCollapseOnLeave = false;
+// 鼠标按下时是否位于搜索组件外部（配合 pointerup 判断“按下与松开都在外”才收起）
+let pointerDownOutside = false;
 
 const fakeResult: SearchResult[] = [
 	{
@@ -67,18 +70,60 @@ const toggleDesktopSearch = () => {
 };
 
 const collapseDesktopSearch = () => {
+	// 点击清空按钮后保持展开，直到用户点击搜索框外部
+	if (suppressCollapseOnLeave) return;
 	if (!keywordDesktop) {
 		isDesktopSearchExpanded = false;
 	}
 };
 
-const handleBlur = () => {
-	// 延迟处理以允许搜索结果的点击事件先于折叠逻辑执行
-	blurTimer = setTimeout(() => {
-		isDesktopSearchExpanded = false;
-		setPanelVisibility(false, true);
-	}, 200);
-};
+/**
+ * 判断点击目标是否位于搜索组件内部（搜索框 / 结果面板 / 移动端开关按钮）。
+ * 点击内部时保持搜索框与结果展开，点击外部才收回。
+ */
+function isInsideSearchWidget(target: EventTarget | null): boolean {
+	if (!(target instanceof Node)) return false;
+	const bar = document.getElementById("search-bar");
+	const panel = document.getElementById("search-panel");
+	const switchBtn = document.getElementById("search-switch");
+	return (
+		bar?.contains(target) ||
+		panel?.contains(target) ||
+		switchBtn?.contains(target) ||
+		false
+	);
+}
+
+/**
+ * 点击搜索结果子项时保持搜索框与结果列表展开（页面切换后依旧保持）；
+ * 只有“按下与松开鼠标都位于搜索组件外部”时才收回搜索框并关闭结果面板。
+ * 不用 click 事件判断：在框内长按选中文本、拖到框外松手时，click 的 target
+ * 会退化为共同祖先（body），导致误判为外部点击而收起。
+ */
+function handleDocPointerDown(event: PointerEvent) {
+	pointerDownOutside = !isInsideSearchWidget(event.target);
+}
+
+function handleDocPointerUp(event: PointerEvent) {
+	if (!pointerDownOutside || isInsideSearchWidget(event.target)) {
+		return;
+	}
+	// 恢复"鼠标移出空搜索框即收起"的正常行为
+	suppressCollapseOnLeave = false;
+	isDesktopSearchExpanded = false;
+	setPanelVisibility(false, true);
+}
+
+/** 清空搜索关键词与结果，并让输入框重新聚焦 */
+function clearSearch() {
+	keywordDesktop = "";
+	result = [];
+	setPanelVisibility(false, true);
+	// 点击清空后搜索框保持展开，鼠标移开也不收起（直到点击外部）
+	suppressCollapseOnLeave = true;
+	isDesktopSearchExpanded = true;
+	document.getElementById("search-input-desktop")?.focus();
+}
 
 const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	if (!keyword) {
@@ -167,13 +212,19 @@ onMount(() => {
 	};
 	window.addEventListener("focus", handleFocus);
 
+	// 点击外部收回搜索框：用 pointerdown/pointerup 而非 click，避免点击结果子项触发收回，
+	// 也避免在框内选中文本拖到框外松手时误收起
+	document.addEventListener("pointerdown", handleDocPointerDown);
+	document.addEventListener("pointerup", handleDocPointerUp);
+
 	return () => {
 		window.removeEventListener("focus", handleFocus);
+		document.removeEventListener("pointerdown", handleDocPointerDown);
+		document.removeEventListener("pointerup", handleDocPointerUp);
 	};
 });
 
 onDestroy(() => {
-	clearTimeout(blurTimer);
 	clearTimeout(focusTimer);
 });
 
@@ -192,15 +243,14 @@ $: if (initialized && keywordMobile) {
 
 <!-- search bar for desktop view（默认折叠为图标，hover 时展开输入框） -->
 <div class="hidden lg:block relative w-11 h-11 shrink-0">
-	<button
+	<div
 		id="search-bar"
 		class:expanded={isDesktopSearchExpanded}
-		class="flex transition-all duration-500 items-center h-11 rounded-lg absolute right-0 top-0 shrink-0 border-0 bg-transparent cursor-pointer overflow-hidden
+		class="flex transition-all duration-500 items-center h-11 rounded-lg absolute right-0 top-0 shrink-0 bg-transparent cursor-pointer overflow-hidden
             {isDesktopSearchExpanded
 				? "w-48 bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06] dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10"
 				: "w-11 hover:bg-black/[0.06] dark:hover:bg-white/10"}
         "
-		aria-label="搜索"
 		on:mouseenter={() => {
 			if (!isDesktopSearchExpanded) {
 				toggleDesktopSearch();
@@ -226,19 +276,27 @@ $: if (initialized && keywordMobile) {
 			placeholder="搜索"
 			bind:value={keywordDesktop}
 			on:focus={() => {
-				clearTimeout(blurTimer);
 				if (!isDesktopSearchExpanded) {
 					toggleDesktopSearch();
 				}
 				search(keywordDesktop, true);
 			}}
-			on:blur={handleBlur}
 			class="transition-all duration-500 min-w-0 pl-2 text-sm bg-transparent outline-0
                 h-full flex-1 {isDesktopSearchExpanded
 				? "opacity-100"
 				: "opacity-0 pointer-events-none"} text-black/50 dark:text-white/50"
 		/>
-	</button>
+		{#if isDesktopSearchExpanded && keywordDesktop}
+			<button
+				type="button"
+				aria-label="清空搜索"
+				class="shrink-0 flex items-center justify-center w-7 h-7 mr-2 rounded-md text-black/35 hover:text-black/80 hover:bg-black/[0.06] dark:text-white/35 dark:hover:text-white/90 dark:hover:bg-white/10 transition-colors duration-200"
+				on:click|stopPropagation={clearSearch}
+			>
+				<Icon icon="material-symbols:close-rounded" class="text-[1.125rem]"></Icon>
+			</button>
+		{/if}
+	</div>
 </div>
 
 <!-- toggle btn for phone/tablet view -->

@@ -21,10 +21,37 @@ const volumePercent = $derived(
 // ---- 标题溢出时自动滚动（跑马灯）----
 let titleContainer: HTMLElement | undefined;
 let titleTrack: HTMLElement | undefined;
-let isTitleMarquee = $state(false);
 // 标题文本（派生值）：只追踪字符串本身，避免父组件每次广播状态
 // （timeupdate 等高频）传入新的 currentSong 对象导致 $effect 频繁重跑、清掉滚动定时器
 const titleText = $derived(currentSong.title);
+// 标题是否溢出（需滚动）：溢出时轨道才渲染第二份副本用于无缝循环
+let shouldMarquee = $state(false);
+
+// ---- 可微调参数 ----
+/** 切歌后先停顿的时长（毫秒）：让用户看清新标题再开始循环滚动 */
+const LEFT_HOLD_MS = 2500;
+/** 滚动速度：标题每移动 1px 所需的毫秒数 */
+const MS_PER_PX = 35;
+/** 循环滚动时两份标题副本之间的间距（像素） */
+const GAP_PX = 25;
+
+/** 生成循环滚动 keyframes（轨道含两份标题副本，平移一个副本宽度即无缝循环），返回单圈时长（毫秒） */
+function setupMarqueeKeyframes(step: number): number {
+	const cycleMs = step * MS_PER_PX;
+	let styleEl = document.getElementById(
+		"title-marquee-kf",
+	) as HTMLStyleElement | null;
+	if (!styleEl) {
+		styleEl = document.createElement("style");
+		styleEl.id = "title-marquee-kf";
+		document.head.appendChild(styleEl);
+	}
+	styleEl.textContent =
+		"@keyframes title-marquee{" +
+		"0%{transform:translateX(0)}" +
+		"100%{transform:translateX(calc(var(--marquee-step,0px) * -1))}}";
+	return cycleMs;
+}
 
 $effect(() => {
 	// 依赖标题文本（派生值），切歌时重新计算是否溢出
@@ -32,27 +59,29 @@ $effect(() => {
 	if (!titleContainer || !titleTrack) {
 		return;
 	}
-	const dist = titleTrack.scrollWidth - titleContainer.clientWidth;
-	if (dist > 0) {
-		// 切歌后先停在最左边让用户看清新标题，稍后再启动滚动
-		isTitleMarquee = false;
+	const seg = titleTrack.firstElementChild as HTMLElement | null;
+	const segW = seg?.offsetWidth ?? 0;
+	const needScroll = segW > titleContainer.clientWidth;
+	// 溢出时才渲染第二份副本（不溢出只显示一份，避免出现两个名字）
+	shouldMarquee = needScroll;
+	if (needScroll) {
+		// 切歌后先停在最左侧（停 LEFT_HOLD_MS）让用户看清新标题，再启动循环滚动
 		const timer = setTimeout(() => {
 			if (!titleContainer || !titleTrack) return;
-			const d = titleTrack.scrollWidth - titleContainer.clientWidth;
-			if (d > 0) {
-				titleTrack.style.setProperty("--marquee-dist", `${d}px`);
-				// 来回各 d/28 秒，两端各停顿 1.25 秒
-				titleTrack.style.setProperty(
-					"--marquee-dur",
-					`${Math.max(4, d / 14 + 2.5)}s`,
-				);
-				isTitleMarquee = true;
-			}
-		}, 1200);
+			const segment = titleTrack.firstElementChild as HTMLElement | null;
+			const w = segment?.offsetWidth ?? 0;
+			// 步长 = 一个副本宽 + 副本间距，保证循环无缝
+			const step = w + GAP_PX;
+			if (step <= 0) return;
+			titleTrack.style.setProperty("--marquee-step", `${step}px`);
+			const cycleMs = setupMarqueeKeyframes(step);
+			titleTrack.style.animation = `title-marquee ${cycleMs}ms linear infinite`;
+		}, LEFT_HOLD_MS);
 		// effect 重跑（切歌）或组件销毁时清理定时器
 		return () => clearTimeout(timer);
 	}
-	isTitleMarquee = false;
+	// 标题未溢出时停止滚动
+	titleTrack.style.animation = "";
 });
 
 // ---- 音量 ----
@@ -100,13 +129,19 @@ function handleVolumeKeyDown(event: KeyboardEvent) {
 	<div class="title-row">
 		<div class="marquee-container" bind:this={titleContainer}>
 			{#key currentSong.title}
-				<!-- 切歌时重建节点，让 marquee 动画从头（最左）开始，而不是接着上一首的滚动位置 -->
+				<!-- 切歌时重建节点，让 marquee 动画从头（最左）开始；轨道含两份相同标题实现无缝循环 -->
 				<span
 					class="marquee-track"
-					class:marquee={isTitleMarquee}
 					bind:this={titleTrack}
-				>{currentSong.title}</span
+					style={`gap: ${GAP_PX}px`}
 				>
+					<span class="marquee-segment">{currentSong.title}</span>
+					{#if shouldMarquee}
+						<span class="marquee-segment" aria-hidden="true"
+							>{currentSong.title}</span
+						>
+					{/if}
+				</span>
 			{/key}
 		</div>
 	</div>
@@ -164,7 +199,8 @@ function handleVolumeKeyDown(event: KeyboardEvent) {
 	}
 
 	.marquee-track {
-		display: inline-block;
+		display: flex;
+		width: max-content;
 		white-space: nowrap;
 		font-weight: 600;
 		color: var(--content-main);
@@ -172,28 +208,13 @@ function handleVolumeKeyDown(event: KeyboardEvent) {
 		will-change: transform;
 	}
 
-	.marquee-track.marquee {
-		animation: title-marquee var(--marquee-dur, 8s) linear infinite;
+	.marquee-segment {
+		display: inline-block;
+		white-space: nowrap;
+		flex-shrink: 0;
 	}
 
-	@keyframes title-marquee {
-		/* 左侧停 → 35% 往左滚到右端 → 右端停 → 85% 往右滚回左端 → 左端停（往返同速） */
-		0% {
-			transform: translateX(0);
-		}
-		35% {
-			transform: translateX(calc(var(--marquee-dist, 0px) * -1));
-		}
-		50% {
-			transform: translateX(calc(var(--marquee-dist, 0px) * -1));
-		}
-		85% {
-			transform: translateX(0);
-		}
-		100% {
-			transform: translateX(0);
-		}
-	}
+	/* 注：title-marquee 的 @keyframes 由 JS 动态注入（见 setupMarqueeKeyframes） */
 
 	:global(.dark) .marquee-track {
 		color: rgb(245 245 245);

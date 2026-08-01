@@ -161,103 +161,26 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	// 是否启用音乐播放器功能
 	enable: true,
 	// 播放器模式：local 本地文件 / meting 在线歌单
-	mode: "local",
-	// 歌单 ID（仅 meting 模式生效）
-	id: "14164869977",
+	mode: "meting",
+	// 以下为 meting 模式配置（将 mode 改为 "meting" 后生效）
+	// 歌单 ID：取歌单页面 URL 中的标识，不同平台格式不同（见 server 注释）
+	id: "5715312555",
+	// 音乐源服务器：netease 网易云 / tencent QQ音乐 / kugou 酷狗 / xiami 虾米 / baidu 百度
+	// 留空则默认 netease。网易云歌单 ID 见 play?list 链接；QQ音乐歌单 ID 为链接末尾一串字母数字
+	server: "tencent",
+	// 内容类型：playlist 歌单 / song 单曲 / album 专辑 / artist 歌手 / search 搜索
+	// 留空则默认 playlist（歌单）
+	type: "playlist",
+	// Meting API 地址：留空使用默认实例 https://api.i-meto.com/meting/api
+	// 支持占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
+	api: "https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
 	// 本地播放列表（local 模式）：
 	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
 	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
 	// 同 url 的条目中已填写的字段优先，未填写的字段仍会从音频元数据自动识别。
 	// 示例：{ id: 1, url: "music/url/xxx.mp3", title: "自定义标题", artist: "自定义歌手" }
 	localPlaylist: [
-	{
-		id: 10,
-		title: "再见，朋友 (Farewell, My Friend!)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/再见，朋友 (Farewell, My Friend!).mp3",
-		duration: 266,
-	},
-	{
-		id: 8,
-		title: "向尖顶攀升的俯冲 (Ascending Dive Towards the Pyramidion)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/向尖顶攀升的俯冲 (Ascending Dive Towards the Pyramidion).mp3",
-		duration: 332,
-	},
-	{
-		id: 3,
-		title: "向着地图上的空白 (Towards the Blanks on the Map)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/向着地图上的空白 (Towards the Blanks on the Map).mp3",
-		duration: 193,
-	},
-	{
-		id: 11,
-		title: "回忆 (Reminiscence)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/回忆 (Reminiscence).mp3",
-		duration: 189,
-	},
-	{
-		id: 6,
-		title: "天空的指环 (Ring of the Sky)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/天空的指环 (Ring of the Sky).mp3",
-		duration: 325,
-	},
-	{
-		id: 2,
-		title: "幻想乐园 (Welcome to Fantasyland!)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/幻想乐园 (Welcome to Fantasyland!).mp3",
-		duration: 183,
-	},
-	{
-		id: 1,
-		title: "新的旅程 (A New Journey)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/新的旅程 (A New Journey).mp3",
-		duration: 115,
-	},
-	{
-		id: 5,
-		title: "永夜之城的轮舞 (Circle Dance of the Evernight Castle)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/永夜之城的轮舞 (Circle Dance of the Evernight Castle).mp3",
-		duration: 374,
-	},
-	{
-		id: 4,
-		title: "海与月的女儿 (Daughter of the Sea and the Moon)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/海与月的女儿 (Daughter of the Sea and the Moon).mp3",
-		duration: 386,
-	},
-	{
-		id: 7,
-		title: "花与罪的无限回廊 (Infinite Cloister of Flowers and Sins)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/花与罪的无限回廊 (Infinite Cloister of Flowers and Sins).mp3",
-		duration: 387,
-	},
-	{
-		id: 9,
-		title: "雪融之境的繁光 (Flourishing Lights of the Snowmelt Realm)",
-		artist: "陈致逸",
-		cover: "music/cover/幻想乐园 Fantasyland.jpg",
-		url: "music/url/雪融之境的繁光 (Flourishing Lights of the Snowmelt Realm).mp3",
-		duration: 421,
-	},
+	
 	],
 	// 默认占位歌曲（播放前显示）
 	defaultSong: {

@@ -11,7 +11,7 @@ export const DEFAULT_VOLUME = 0.7;
 
 /** Meting API 默认地址（meting 模式） */
 export const DEFAULT_METING_API =
-	"https://www.bilibili.uno/api?server=:server&type=:type&id=:id&auth=:auth&r=:r";
+	"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r";
 
 /** Meting 默认歌单 ID */
 export const DEFAULT_METING_ID = "14164869977";
@@ -25,5 +25,5 @@ export const DEFAULT_METING_TYPE = "playlist";
 /** 错误提示展示时长（毫秒） */
 export const ERROR_DISPLAY_DURATION = 3000;
 
-/** 歌曲加载失败后自动切到下一首的延迟（毫秒） */
-export const SKIP_ERROR_DELAY = 1000;
+/** 歌曲加载超时判定为失败的时间（毫秒）；部分坏链接不触发 error 而是无限缓冲，超时后自动剔除并切下一首 */
+export const LOAD_TIMEOUT_MS = 8000;

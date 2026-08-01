@@ -1,4 +1,4 @@
-import type { AUTO_MODE, DARK_MODE, LIGHT_MODE } from "@constants/constants";
+import type { DARK_MODE, LIGHT_MODE } from "@constants/constants";
 import type { Song } from "./music";
 
 export type SiteConfig = {
@@ -72,10 +72,7 @@ export type LicenseConfig = {
 	url: string;
 };
 
-export type LIGHT_DARK_MODE =
-	| typeof LIGHT_MODE
-	| typeof DARK_MODE
-	| typeof AUTO_MODE;
+export type LIGHT_DARK_MODE = typeof LIGHT_MODE | typeof DARK_MODE;
 
 export type BlogPostData = {
 	body: string;
@@ -140,6 +137,12 @@ export type MusicPlayerConfig = {
 	mode: MusicPlayerMode;
 	/** 歌单 ID（仅 meting 模式） */
 	id?: string;
+	/** Meting 音乐源服务器（仅 meting 模式）：netease 网易云 / tencent QQ音乐 / kugou 酷狗 / xiami 虾米 / baidu 百度；留空默认 netease */
+	server?: string;
+	/** Meting 内容类型（仅 meting 模式）：playlist 歌单 / song 单曲 / album 专辑 / artist 歌手 / search 搜索；留空默认 playlist */
+	type?: string;
+	/** Meting API 地址（仅 meting 模式）：留空使用默认第三方实例；支持 :server :type :id :auth :r 占位符 */
+	api?: string;
 	/** 本地播放列表（local 模式）：留空时构建时自动扫描 /public/music/url/ 目录并识别元数据；条目仅作为覆盖项 */
 	localPlaylist?: LocalPlaylistEntry[];
 	/** 默认占位歌曲（播放前显示） */

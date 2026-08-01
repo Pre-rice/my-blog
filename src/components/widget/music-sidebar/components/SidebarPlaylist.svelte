@@ -3,6 +3,23 @@ import type { Song } from "../../../../types/music";
 import AccordionDrawer from "./AccordionDrawer.svelte";
 import TrackListItem from "./TrackListItem.svelte";
 
+// 滚轮灵敏度：实际滚动距离 = 原生滚轮增量 × SCROLL_FACTOR
+// 小于 1 减速（更慢，便于逐条选歌），大于 1 加速
+const SCROLL_FACTOR = 0.8;
+
+function handleWheel(e: WheelEvent) {
+	// 保留 Ctrl+滚轮的页面缩放手势
+	if (e.ctrlKey) return;
+	const el = e.currentTarget as HTMLElement;
+	const canScrollUp = el.scrollTop > 0;
+	const canScrollDown = el.scrollTop + el.clientHeight < el.scrollHeight;
+	// 只拦截本列表还能继续滚动的方向，滚动到头/尾时放行给页面
+	if ((e.deltaY < 0 && canScrollUp) || (e.deltaY > 0 && canScrollDown)) {
+		e.preventDefault();
+		el.scrollTop += e.deltaY * SCROLL_FACTOR;
+	}
+}
+
 interface Props {
 	playlist: Song[];
 	currentIndex: number;
@@ -20,6 +37,7 @@ const { playlist, currentIndex, isPlaying, show, onClose, onPlaySong }: Props =
 	<div class="playlist-shell">
 		<div
 			class="playlist-content"
+			onwheel={handleWheel}
 			role="listbox"
 			aria-label="Playlist"
 			aria-multiselectable="false"
@@ -51,16 +69,32 @@ const { playlist, currentIndex, isPlaying, show, onClose, onPlaySong }: Props =
 	.playlist-content {
 		overflow-y: auto;
 		max-height: 12rem;
-		padding-right: 0.25rem;
+		padding-right: 0.35rem;
+		scroll-behavior: smooth;
 		padding-bottom: 0.25rem;
 		display: flex;
 		flex-direction: column;
 		gap: 0.25rem;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
+		/* 显示细滚动条方便选歌 */
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--content-meta) 30%, transparent)
+			transparent;
 	}
 
 	.playlist-content::-webkit-scrollbar {
-		display: none;
+		width: 6px;
+	}
+
+	.playlist-content::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.playlist-content::-webkit-scrollbar-thumb {
+		background: color-mix(in srgb, var(--content-meta) 30%, transparent);
+		border-radius: 999px;
+	}
+
+	.playlist-content::-webkit-scrollbar-thumb:hover {
+		background: color-mix(in srgb, var(--content-meta) 55%, transparent);
 	}
 </style>

@@ -7,7 +7,6 @@ import "@fontsource/roboto/700.css";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import { profileConfig, siteConfig } from "@/config";
 import {
-	AUTO_MODE,
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_EXTEND,
 	BANNER_HEIGHT_HOME,
@@ -116,22 +115,13 @@ import { SEO } from "astro-seo";
 		))}
 
 		<!-- Set the theme before the page is rendered to avoid a flash -->
-		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
-			// Load the theme from local storage
-			const theme = localStorage.getItem('theme') || DEFAULT_THEME;
-			switch (theme) {
-				case LIGHT_MODE:
-					document.documentElement.classList.remove('dark');
-					break
-				case DARK_MODE:
-					document.documentElement.classList.add('dark');
-					break
-				case AUTO_MODE:
-					if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-						document.documentElement.classList.add('dark');
-					} else {
-						document.documentElement.classList.remove('dark');
-					}
+		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
+			// Load the theme from local storage（兼容旧版残留的 "auto" 值，视为默认暗色）
+			const theme = localStorage.getItem('theme');
+			if (theme === LIGHT_MODE) {
+				document.documentElement.classList.remove('dark');
+			} else {
+				document.documentElement.classList.add('dark');
 			}
 
 			// Load the hue from local storage
@@ -265,16 +255,25 @@ function disableAnimation() {
 const bannerEnabled = !!document.getElementById('banner-wrapper')
 
 function setClickOutsideToClose(panel: string, ignores: string[]) {
-	document.addEventListener("click", event => {
-		let panelDom = document.getElementById(panel);
-		let tDom = event.target;
-		if (!(tDom instanceof Node)) return;		// Ensure the event target is an HTML Node
+	let downOutside = false;
+	const isIgnored = (tDom: EventTarget | null) => {
+		if (!(tDom instanceof Node)) return true;		// Ensure the event target is an HTML Node
 		for (let ig of ignores) {
 			let ie = document.getElementById(ig)
 			if (ie == tDom || (ie?.contains(tDom))) {
-				return;
+				return true;
 			}
 		}
+		return false;
+	};
+	// 用 pointerdown/pointerup 而非 click：面板内按住选中文本、拖到面板外松开时，
+	// click 的 target 会退化为共同祖先导致误关，改为按下与松开都在外部才关闭
+	document.addEventListener("pointerdown", event => {
+		downOutside = !isIgnored(event.target);
+	});
+	document.addEventListener("pointerup", event => {
+		if (!downOutside || isIgnored(event.target)) return;
+		let panelDom = document.getElementById(panel);
 		panelDom!.classList.add("float-panel-closed");
 	});
 }
