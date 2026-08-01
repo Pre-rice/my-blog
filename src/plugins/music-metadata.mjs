@@ -321,6 +321,9 @@ async function generatePlaylist() {
 		playlist.push(await resolveSong(entry, url, usedIds));
 	}
 
+	// 3. 播放顺序按填写的 id 升序排列（而不是目录扫描/文件名的顺序）
+	playlist.sort((a, b) => a.id - b.id);
+
 	// 写入生成文件
 	const lines = [
 		"// 本文件由 src/plugins/music-metadata.mjs 在构建时自动生成，请勿手动编辑。",

@@ -80,11 +80,6 @@ let heading1Count = 1;
 		height: 0;
 	}
 
-	/* 无标题时隐藏整个目录卡片（如非文章页面） */
-	.toc-widget-card:has(table-of-contents.empty) {
-		display: none;
-	}
-
 	table-of-contents {
 		display: block;
 		position: relative;
@@ -95,6 +90,28 @@ let heading1Count = 1;
 
 	table-of-contents::-webkit-scrollbar {
 		display: none;
+	}
+</style>
+
+<!-- 目录卡片显隐（必须全局：.toc-widget-card 落在 WidgetLayout 渲染的 <widget-layout> 元素上，
+     不带本组件的 Astro scope，scoped 样式会失效）。
+     文章页有标题 → 常显；非文章页（empty）→ 淡出后隐藏。过渡效果参照“返回顶部”按钮（opacity 0.3s）。 -->
+<style is:global>
+	.toc-widget-card {
+		transition:
+			opacity 0.3s ease,
+			visibility 0s linear 0.3s;
+	}
+	.toc-widget-card:has(table-of-contents.empty) {
+		opacity: 0;
+		pointer-events: none;
+		visibility: hidden;
+		/* 覆盖 onload-animation 的 fade-in-up：其 animation-fill-mode: forwards
+		   会把 opacity 定格为 1，压过这里的 opacity: 0（动画值优先级更高） */
+		animation: none !important;
+		transition:
+			opacity 0.3s ease,
+			visibility 0s linear 0.3s;
 	}
 </style>
 
@@ -120,12 +137,17 @@ class TableOfContents extends HTMLElement {
 
     markVisibleSection = (entries: IntersectionObserverEntry[]) => {
         entries.forEach((entry) => {
-            const id = entry.target.children[0]?.getAttribute("id");
+            // 观察目标是标题自身（typst）或 section（markdown）时取 id 的方式不同
+            const id =
+                entry.target.getAttribute?.("id") ||
+                entry.target.children[0]?.getAttribute("id");
             const idx = id ? this.headingIdxMap.get(id) : undefined;
             if (idx != undefined)
                 this.active[idx] = entry.isIntersecting;
 
-            if (entry.isIntersecting && this.anchorNavTarget == entry.target.firstChild)
+            if (entry.isIntersecting &&
+                (entry.target == this.anchorNavTarget ||
+                    entry.target.firstChild == this.anchorNavTarget))
                 this.anchorNavTarget = null;
         });
 
@@ -273,7 +295,13 @@ class TableOfContents extends HTMLElement {
         for (let i = 0; i < this.tocEntries.length; i++) {
             const id = decodeURIComponent(this.tocEntries[i].hash?.substring(1));
             const heading = document.getElementById(id);
-            const section = heading?.parentElement;
+            const parent = heading?.parentElement;
+            // typst 正文所有标题共享同一个父 div，markdown 经 remark-sectionize 每个标题一个 section；
+            // 共享父元素时退化为观察标题自身，否则 indicator 会把所有标题当成同一区块
+            const shared =
+                parent &&
+                parent.querySelectorAll("h1,h2,h3,h4,h5,h6").length > 1;
+            const section = shared ? heading : parent;
             if (heading instanceof HTMLElement && section instanceof HTMLElement) {
                 this.headings[i] = heading;
                 this.sections[i] = section;
@@ -282,9 +310,9 @@ class TableOfContents extends HTMLElement {
         }
         this.active = new Array(this.tocEntries.length).fill(false);
 
-        this.sections.forEach((section) =>
-            this.observer.observe(section)
-        );
+        this.sections.forEach((section) => {
+            if (section instanceof HTMLElement) this.observer.observe(section);
+        });
 
         this.fallback();
         this.update();

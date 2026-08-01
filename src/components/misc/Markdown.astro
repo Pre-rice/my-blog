@@ -4,14 +4,22 @@ import "@fontsource-variable/jetbrains-mono/wght-italic.css";
 
 interface Props {
 	class: string;
+	/** .typ 文章标题的 slug 列表（github-slugger 生成），客户端脚本按顺序给标题补 id 与锚点 */
+	headingSlugs?: string[];
 }
-const className = Astro.props.class;
+const { class: className, headingSlugs } = Astro.props;
 ---
-<div data-pagefind-body class={`prose dark:prose-invert prose-base !max-w-none custom-md ${className}`}>
+<div data-pagefind-body
+     data-typst-heading-slugs={headingSlugs ? JSON.stringify(headingSlugs) : undefined}
+     class={`prose dark:prose-invert prose-base !max-w-none custom-md ${className}`}>
     <!--<div class="prose dark:prose-invert max-w-none custom-md">-->
     <!--<div class="max-w-none custom-md">-->
     <slot/>
 </div>
+
+<style>
+  /* 公式现在是 MathML（typst 0.15 原生导出），颜色继承正文 CSS，无需额外覆盖 */
+</style>
 
 <script>
 document.addEventListener("click", function (e: MouseEvent) {

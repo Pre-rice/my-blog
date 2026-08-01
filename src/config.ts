@@ -171,7 +171,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	// 示例：{ id: 1, url: "music/url/xxx.mp3", title: "自定义标题", artist: "自定义歌手" }
 	localPlaylist: [
 	{
-		id: 1,
+		id: 10,
 		title: "再见，朋友 (Farewell, My Friend!)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -179,7 +179,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 266,
 	},
 	{
-		id: 2,
+		id: 8,
 		title: "向尖顶攀升的俯冲 (Ascending Dive Towards the Pyramidion)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -195,7 +195,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 193,
 	},
 	{
-		id: 4,
+		id: 11,
 		title: "回忆 (Reminiscence)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -203,7 +203,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 189,
 	},
 	{
-		id: 5,
+		id: 6,
 		title: "天空的指环 (Ring of the Sky)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -211,7 +211,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 325,
 	},
 	{
-		id: 6,
+		id: 2,
 		title: "幻想乐园 (Welcome to Fantasyland!)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -219,7 +219,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 183,
 	},
 	{
-		id: 7,
+		id: 1,
 		title: "新的旅程 (A New Journey)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -227,7 +227,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 115,
 	},
 	{
-		id: 8,
+		id: 5,
 		title: "永夜之城的轮舞 (Circle Dance of the Evernight Castle)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -235,7 +235,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 374,
 	},
 	{
-		id: 9,
+		id: 4,
 		title: "海与月的女儿 (Daughter of the Sea and the Moon)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -243,7 +243,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 386,
 	},
 	{
-		id: 10,
+		id: 7,
 		title: "花与罪的无限回廊 (Infinite Cloister of Flowers and Sins)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",
@@ -251,7 +251,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 		duration: 387,
 	},
 	{
-		id: 11,
+		id: 9,
 		title: "雪融之境的繁光 (Flourishing Lights of the Snowmelt Realm)",
 		artist: "陈致逸",
 		cover: "music/cover/幻想乐园 Fantasyland.jpg",

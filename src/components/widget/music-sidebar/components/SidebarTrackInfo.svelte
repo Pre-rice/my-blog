@@ -22,25 +22,37 @@ const volumePercent = $derived(
 let titleContainer: HTMLElement | undefined;
 let titleTrack: HTMLElement | undefined;
 let isTitleMarquee = $state(false);
+// 标题文本（派生值）：只追踪字符串本身，避免父组件每次广播状态
+// （timeupdate 等高频）传入新的 currentSong 对象导致 $effect 频繁重跑、清掉滚动定时器
+const titleText = $derived(currentSong.title);
 
 $effect(() => {
-	// 依赖标题文本，切歌时重新计算是否溢出
-	void currentSong.title;
+	// 依赖标题文本（派生值），切歌时重新计算是否溢出
+	void titleText;
 	if (!titleContainer || !titleTrack) {
 		return;
 	}
 	const dist = titleTrack.scrollWidth - titleContainer.clientWidth;
 	if (dist > 0) {
-		isTitleMarquee = true;
-		titleTrack.style.setProperty("--marquee-dist", `${dist}px`);
-		// 来回各 dist/28 秒，两端各停顿 1.25 秒
-		titleTrack.style.setProperty(
-			"--marquee-dur",
-			`${Math.max(4, dist / 14 + 2.5)}s`,
-		);
-	} else {
+		// 切歌后先停在最左边让用户看清新标题，稍后再启动滚动
 		isTitleMarquee = false;
+		const timer = setTimeout(() => {
+			if (!titleContainer || !titleTrack) return;
+			const d = titleTrack.scrollWidth - titleContainer.clientWidth;
+			if (d > 0) {
+				titleTrack.style.setProperty("--marquee-dist", `${d}px`);
+				// 来回各 d/28 秒，两端各停顿 1.25 秒
+				titleTrack.style.setProperty(
+					"--marquee-dur",
+					`${Math.max(4, d / 14 + 2.5)}s`,
+				);
+				isTitleMarquee = true;
+			}
+		}, 1200);
+		// effect 重跑（切歌）或组件销毁时清理定时器
+		return () => clearTimeout(timer);
 	}
+	isTitleMarquee = false;
 });
 
 // ---- 音量 ----
@@ -87,12 +99,15 @@ function handleVolumeKeyDown(event: KeyboardEvent) {
 <div class="flex flex-col min-w-0 flex-1 overflow-hidden">
 	<div class="title-row">
 		<div class="marquee-container" bind:this={titleContainer}>
-			<span
-				class="marquee-track"
-				class:marquee={isTitleMarquee}
-				bind:this={titleTrack}
-			>{currentSong.title}</span
-			>
+			{#key currentSong.title}
+				<!-- 切歌时重建节点，让 marquee 动画从头（最左）开始，而不是接着上一首的滚动位置 -->
+				<span
+					class="marquee-track"
+					class:marquee={isTitleMarquee}
+					bind:this={titleTrack}
+				>{currentSong.title}</span
+				>
+			{/key}
 		</div>
 	</div>
 	<div class="artist-row">

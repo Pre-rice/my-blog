@@ -557,3 +557,49 @@ if (window.swup) {
 	document.addEventListener("swup:enable", setup)
 }
 </script>
+
+<script is:inline>
+// 为 .typ 文章标题补 id 和 autolink 锚点，使侧栏 TOC 与 .md 完全一致：
+// slug 由 SSR 的 github-slugger 生成并写入 data-typst-heading-slugs，这里按顺序分配
+// is:inline 保证脚本直接输出到页面；放全局布局，确保从任意页面 Swup 切换进入文章页时监听已注册
+function addTypstHeadingAnchors() {
+	const container = document.querySelector(".typst-content");
+	if (!container) return;
+	let slugs = [];
+	try {
+		slugs = JSON.parse(
+			container.getAttribute("data-typst-heading-slugs") || "[]",
+		);
+	} catch (e) {
+		slugs = [];
+	}
+	container.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((heading, index) => {
+		const slug = slugs[index] || `heading-${index + 1}`;
+		if (!heading.id) heading.id = slug;
+		// 与 .md 的 rehypeAutolinkHeadings(behavior: "append") 输出一致：
+		// 标题内容之后追加 <a class="anchor"><span class="anchor-icon">#</span></a>
+		if (!heading.querySelector(":scope > a.anchor")) {
+			const anchor = document.createElement("a");
+			anchor.href = `#${slug}`;
+			anchor.className = "anchor";
+			anchor.setAttribute("aria-hidden", "true");
+			const icon = document.createElement("span");
+			icon.className = "anchor-icon";
+			icon.setAttribute("data-pagefind-ignore", "true");
+			icon.textContent = "#";
+			anchor.appendChild(icon);
+			heading.appendChild(anchor);
+		}
+	});
+}
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", addTypstHeadingAnchors);
+} else {
+	addTypstHeadingAnchors();
+}
+if (window.swup) {
+	window.swup.hooks.on("content:replace", () => {
+		setTimeout(addTypstHeadingAnchors, 0);
+	});
+}
+</script>

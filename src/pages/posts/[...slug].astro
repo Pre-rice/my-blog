@@ -1,9 +1,10 @@
 ---
+import type { MarkdownHeading } from "astro";
 import path from "node:path";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getSortedPosts } from "@utils/content-utils";
+import { countTypstWords, extractTypstHeadings, getSortedPosts } from "@utils/content-utils";
 import { getDir, getPostUrlBySlug } from "@utils/url-utils";
 import { Icon } from "astro-icon/components";
 import { licenseConfig } from "src/config";
@@ -22,9 +23,22 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await entry.render();
-
-const { remarkPluginFrontmatter } = await entry.render();
+// .typ 文章的 render 没有 remarkPluginFrontmatter/headings，需要兜底；字数从源码统计
+// biome-ignore lint/suspicious/noExplicitAny: .typ 与 .md 的 render 返回结构不同
+const rendered = (await entry.render()) as any;
+const { Content } = rendered;
+const { remarkPluginFrontmatter = {} } = rendered;
+const isTyp = entry.id.endsWith(".typ");
+// .typ 的 render 不提供 headings，手动从源码解析标题供 TOC 使用
+const headings: MarkdownHeading[] = isTyp
+	? extractTypstHeadings(String(entry.body ?? ""))
+	: (rendered.headings ?? []);
+const words = isTyp
+	? countTypstWords(String(entry.body ?? ""))
+	: (remarkPluginFrontmatter.words ?? 0);
+const minutes = isTyp
+	? Math.max(1, Math.round(words / 200))
+	: (remarkPluginFrontmatter.minutes ?? 0);
 
 const jsonLd = {
 	"@context": "https://schema.org",
@@ -54,14 +68,14 @@ const jsonLd = {
                     <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
                         <Icon name="material-symbols:notes-rounded"></Icon>
                     </div>
-                    <div class="text-sm">{remarkPluginFrontmatter.words} 字</div>
+                    <div class="text-sm">{words} 字</div>
                 </div>
                 <div class="flex flex-row items-center">
                     <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
                         <Icon name="material-symbols:schedule-outline-rounded"></Icon>
                     </div>
                     <div class="text-sm">
-                        {remarkPluginFrontmatter.minutes} 分钟
+                        {minutes} 分钟
                     </div>
                 </div>
             </div>
@@ -99,7 +113,8 @@ const jsonLd = {
             }
 
 
-            <Markdown class="mb-6 markdown-content onload-animation">
+            <Markdown class={`mb-6 markdown-content onload-animation${isTyp ? " typst-content" : ""}`}
+                      headingSlugs={isTyp ? headings.map((h) => h.slug) : undefined}>
                 <Content />
             </Markdown>
 

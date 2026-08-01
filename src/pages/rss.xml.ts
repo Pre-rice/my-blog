@@ -24,8 +24,13 @@ export async function GET(context: APIContext) {
 		description: siteConfig.subtitle || "No description",
 		site: context.site ?? "https://fuwari.vercel.app",
 		items: blog.map((post) => {
-			const content =
-				typeof post.body === "string" ? post.body : String(post.body || "");
+			// .typ 文章的 body 是 typst 源码，不能作为 RSS 正文，退回 description
+			const isTyp = post.id.endsWith(".typ");
+			const content = isTyp
+				? post.data.description || ""
+				: typeof post.body === "string"
+					? post.body
+					: String(post.body || "");
 			const cleanedContent = stripInvalidXmlChars(content);
 			return {
 				title: post.data.title,

@@ -3,6 +3,7 @@
 import type { CollectionEntry } from "astro:content";
 import path from "node:path";
 import { Icon } from "astro-icon/components";
+import { countTypstWords } from "../utils/content-utils";
 import { getDir, getTagUrl } from "../utils/url-utils";
 import ImageWrapper from "./misc/ImageWrapper.astro";
 import PostMetadata from "./PostMeta.astro";
@@ -39,7 +40,13 @@ const hasCover = image !== undefined && image !== null && image !== "";
 
 const coverWidth = "28%";
 
-const { remarkPluginFrontmatter } = await entry.render();
+// .typ 文章的 render 没有 remarkPluginFrontmatter，需要兜底；字数从源码统计
+// biome-ignore lint/suspicious/noExplicitAny: .typ 与 .md 的 render 返回结构不同
+const rendered = (await entry.render()) as any;
+const { remarkPluginFrontmatter = {} } = rendered;
+const words = entry.id.endsWith(".typ")
+	? countTypstWords(String(entry.body ?? ""))
+	: remarkPluginFrontmatter.words;
 ---
 <div class:list={["card-base flex flex-col-reverse md:flex-col w-full rounded-[var(--radius-large)] overflow-hidden relative", className]} style={style}>
     <div class:list={["pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative", {"w-full md:w-[calc(100%_-_52px_-_12px)]": !hasCover, "w-full md:w-[calc(100%_-_var(--coverWidth)_-_12px)]": hasCover}]}>
@@ -58,7 +65,7 @@ const { remarkPluginFrontmatter } = await entry.render();
         <!-- metadata（日期/分类/词数，标签移到底部） -->
         <PostMetadata published={published} updated={updated} tags={tags} category={category}
             hideTagsForMobile={true} hideUpdateDate={true}
-            showOnlyBasicMeta={true} words={remarkPluginFrontmatter.words} showWordCount={true}
+            showOnlyBasicMeta={true} words={words} showWordCount={true}
             class="mb-4"></PostMetadata>
 
         <!-- description -->

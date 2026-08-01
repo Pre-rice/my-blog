@@ -1,0 +1,289 @@
+diff --git a/dist/lib/integration.js b/dist/lib/integration.js
+index 9ad53809f2bffb1e0d2b74f32f2a0c4376dfbe7e..591a2c01d64a747d0cd0cc4b3925fea680eb45a1 100644
+--- a/dist/lib/integration.js
++++ b/dist/lib/integration.js
+@@ -1,5 +1,4 @@
+ import vitePluginTypst from "./vite.js";
+-import { nodeResolve } from '@rollup/plugin-node-resolve';
+ import { renderToHTMLish } from "./typst.js";
+ import { fileURLToPath } from "url";
+ import { createResolver, watchDirectory } from "astro-integration-kit";
+@@ -73,8 +72,10 @@ declare module 'astro:content' {
+                                 ],
+                             }
+                         },
++                        // 移除 nodeResolve：@rollup/plugin-node-resolve 是 Rollup 2 插件，
++                        // 塞进 Vite 会污染 dev 解析管线（导致 client:only 组件水合失败）
+                         // @ts-ignore
+-                        plugins: [nodeResolve(), vitePluginTypst(config)],
++                        plugins: [vitePluginTypst(config)],
+                     },
+                 });
+             },
+diff --git a/dist/lib/vite.js b/dist/lib/vite.js
+index 3a9a8f6..fc230f4 100644
+--- a/dist/lib/vite.js
++++ b/dist/lib/vite.js
+@@ -6,6 +6,7 @@ import { rehypeTypstx } from "./rehype.js";
+ import logger from "./logger.js";
+ import path from "node:path/posix";
+ import { getAstroConfig } from "./store.js";
++import { load } from "cheerio";
+ function isTypstFile(id) {
+     return /\.typ(\?(html|svg|html&body|body&html|html-text|html-hast))?$/.test(id);
+ }
+@@ -121,6 +122,27 @@ export default function (config) {
+                     }
+                     html = await rehypeTypstx(html, astroConfig.markdown?.rehypePlugins ?? []);
+                 }
++                else if (htmlMode === 'text') {
++                    // —— 与 .md 格式统一后处理 ——
++                    const $ = load(html);
++                    // (a) 标题降级：typst 的 `=` 渲染为 <h2>，整体降一级与 md 的 `#` 对齐
++                    for (const [sel, tag] of [["h2", "h1"], ["h3", "h2"], ["h4", "h3"], ["h5", "h4"], ["h6", "h5"]]) {
++                        $(sel).each(function () {
++                            $(this).replaceWith(`<${tag}>${$(this).html()}</${tag}>`);
++                        });
++                    }
++                    // (b) 松列表解包：typst 的 li 内容包在 <p> 里（结构包裹），
++                    //     解开这些 <p> 让 li 内直接为文本；li 内全是 <p> 且不止一个（真正多段）时保留
++                    $("li").each(function () {
++                        const $kids = $(this).children();
++                        const $ps = $kids.filter("p");
++                        if ($kids.length === $ps.length && $ps.length > 1) return;
++                        $ps.each(function () {
++                            $(this).contents().unwrap();
++                        });
++                    });
++                    html = $.html();
++                }
+             }
+             const code = (isHtml && htmlMode === 'hast') ? html + "\nexport const Content = MDXContent" : `
+ import { createComponent, render, renderJSX, renderComponent, unescapeHTML } from "astro/runtime/server/index.js";
+diff --git a/dist/lib/vite.js b/dist/lib/vite.js
+index 5dce0b0..5b81bc9 100644
+--- a/dist/lib/vite.js
++++ b/dist/lib/vite.js
+@@ -7,6 +7,190 @@ import logger from "./logger.js";
+ import path from "node:path/posix";
+ import { getAstroConfig } from "./store.js";
+ import { load } from "cheerio";
++import { createRenderer } from "astro-expressive-code";
++import { toHtml } from "@expressive-code/core/hast";
++import { definePlugin } from "@expressive-code/core";
++import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
++import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
++
++// —— 与 md 代码块效果统一：expressive-code 程序化渲染 ——
++// 项目自定义插件（语言徽章、复制按钮）内联于此（补丁位于 node_modules，无法直接 import 项目 src）
++function pluginLanguageBadge() {
++	return definePlugin({
++		name: "Language Badge",
++		baseStyles: () => `
++      [data-language]::before {
++        position: absolute;
++        z-index: 2;
++        right: 0.5rem;
++        top: 0.5rem;
++        padding: 0.1rem 0.5rem;
++        content: attr(data-language);
++        font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
++        font-size: 0.75rem;
++        font-weight: bold;
++        text-transform: uppercase;
++        color: oklch(0.75 0.1 var(--hue));
++        background: oklch(0.33 0.035 var(--hue));
++        border-radius: 0.5rem;
++        pointer-events: none;
++        transition: opacity 0.3s;
++        opacity: 0;
++      }
++      .frame:not(.has-title):not(.is-terminal) {
++        @media (hover: none) {
++          & [data-language]::before {
++            opacity: 1;
++            margin-right: 3rem;
++          }
++          & [data-language]:active::before {
++            opacity: 0;
++          }
++        }
++        @media (hover: hover) {
++          & [data-language]::before {
++            opacity: 1;
++          }
++          &:hover [data-language]::before {
++            opacity: 0;
++          }
++        }
++      }
++    `,
++	});
++}
++function pluginCustomCopyButton() {
++	return definePlugin({
++		name: "Custom Copy Button",
++		hooks: {
++			postprocessRenderedBlock: (context) => {
++				function traverse(node) {
++					if (node.type === "element" && node.tagName === "pre") {
++						processCodeBlock(node);
++						return;
++					}
++					if (node.children) {
++						for (const child of node.children) {
++							if (child.type === "element") traverse(child);
++						}
++					}
++				}
++				function processCodeBlock(node) {
++					const copyButton = {
++						type: "element",
++						tagName: "button",
++						properties: {
++							className: ["copy-btn"],
++							"aria-label": "Copy code",
++						},
++						children: [
++							{
++								type: "element",
++								tagName: "div",
++								properties: { className: ["copy-btn-icon"] },
++								children: [
++									{
++										type: "element",
++										tagName: "svg",
++										properties: {
++											viewBox: "0 -960 960 960",
++											xmlns: "http://www.w3.org/2000/svg",
++											className: ["copy-btn-icon", "copy-icon"],
++										},
++										children: [
++											{
++												type: "element",
++												tagName: "path",
++												properties: {
++													d: "M368.37-237.37q-34.48 0-58.74-24.26-24.26-24.26-24.26-58.74v-474.26q0-34.48 24.26-58.74 24.26-24.26 58.74-24.26h378.26q34.48 0 58.74 24.26 24.26 24.26 24.26 58.74v474.26q0 34.48-24.26 58.74-24.26 24.26-58.74 24.26H368.37Zm0-83h378.26v-474.26H368.37v474.26Zm-155 238q-34.48 0-58.74-24.26-24.26-24.26-24.26-58.74v-515.76q0-17.45 11.96-29.48 11.97-12.02 29.33-12.02t29.54 12.02q12.17 12.03 12.17 29.48v515.76h419.76q17.45 0 29.48 11.96 12.02 11.97 12.02 29.33t-12.02 29.54q-12.03 12.17-29.48 12.17H213.37Zm155-238v-474.26 474.26Z",
++												},
++												children: [],
++											},
++										],
++									},
++									{
++										type: "element",
++										tagName: "svg",
++										properties: {
++											viewBox: "0 -960 960 960",
++											xmlns: "http://www.w3.org/2000/svg",
++											className: ["copy-btn-icon", "success-icon"],
++										},
++										children: [
++											{
++												type: "element",
++												tagName: "path",
++												properties: {
++													d: "m389-377.13 294.7-294.7q12.58-12.67 29.52-12.67 16.93 0 29.61 12.67 12.67 12.68 12.67 29.53 0 16.86-12.28 29.14L419.07-288.41q-12.59 12.67-29.52 12.67-16.94 0-29.62-12.67L217.41-430.93q-12.67-12.68-12.79-29.45-.12-16.77 12.55-29.45 12.68-12.67 29.62-12.67 16.93 0 29.28 12.67L389-377.13Z",
++												},
++												children: [],
++											},
++										],
++									},
++								],
++							},
++						],
++					};
++					if (!node.children) {
++						node.children = [];
++					}
++					node.children.push(copyButton);
++				}
++				traverse(context.renderData.blockAst);
++			},
++		},
++	});
++}
++
++let rendererPromise = null;
++function getRenderer() {
++	if (!rendererPromise) {
++		rendererPromise = createRenderer({
++			themes: ["github-dark", "github-dark"],
++			plugins: [
++				pluginCollapsibleSections(),
++				pluginLineNumbers(),
++				pluginLanguageBadge(),
++				pluginCustomCopyButton(),
++			],
++			defaultProps: {
++				wrap: true,
++				overridesByLang: {
++					shellsession: { showLineNumbers: false },
++				},
++			},
++			styleOverrides: {
++				codeBackground: "var(--codeblock-bg)",
++				borderRadius: "0.75rem",
++				borderColor: "none",
++				codeFontSize: "0.875rem",
++				codeFontFamily: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
++				codeLineHeight: "1.5rem",
++				frames: {
++					editorBackground: "var(--codeblock-bg)",
++					terminalBackground: "var(--codeblock-bg)",
++					terminalTitlebarBackground: "var(--codeblock-topbar-bg)",
++					editorTabBarBackground: "var(--codeblock-topbar-bg)",
++					editorActiveTabBackground: "none",
++					editorActiveTabIndicatorBottomColor: "var(--primary)",
++					editorActiveTabIndicatorTopColor: "none",
++					editorTabBarBorderBottomColor: "var(--codeblock-topbar-bg)",
++					terminalTitlebarBorderBottomColor: "none",
++				},
++				textMarkers: {
++					delHue: 0,
++					insHue: 180,
++					markHue: 250,
++				},
++			},
++			frames: {
++				showCopyToClipboardButton: false,
++			},
++		});
++	}
++	return rendererPromise;
++}
++
+ function isTypstFile(id) {
+     return /\.typ(\?(html|svg|html&body|body&html|html-text|html-hast))?$/.test(id);
+ }
+@@ -141,7 +325,30 @@ export default function (config) {
+                             $(this).contents().unwrap();
+                         });
+                     });
+-                    html = $.html();
++                    // (c) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
++                    const $pres = $("pre");
++                    if ($pres.length > 0) {
++                        const renderer = await getRenderer();
++                        const extraStyles = new Set();
++                        for (const pre of $pres.toArray()) {
++                            const $pre = $(pre);
++                            const $code = $pre.children("code").first();
++                            if (!$code.length) continue;
++                            const { renderedGroupAst, styles } = await renderer.ec.render({
++                                code: $code.text(),
++                                language: $code.attr("data-lang") || "",
++                                meta: "",
++                            });
++                            styles.forEach((s) => extraStyles.add(s));
++                            $pre.replaceWith(toHtml(renderedGroupAst));
++                        }
++                        // 注入 EC 基础样式 + 主题样式 + 块级样式 + 无障碍 JS（放 body 内，head 会被忽略）
++                        $("body").prepend(`<style>${renderer.baseStyles}\n${renderer.themeStyles}\n${[...extraStyles].join("\n")}</style>`);
++                        if (renderer.jsModules.length) {
++                            $("body").append(`<script type="module">${renderer.jsModules.join("\n")}</script>`);
++                        }
++                    }
++                    html = $("body").html();
+                 }
+             }
+             const code = (isHtml && htmlMode === 'hast') ? html + "\nexport const Content = MDXContent" : `

@@ -1,6 +1,6 @@
 ---
 title: Python 速查笔记
-published: 2026-07-31
+published: 2026-07-31-1
 description: 基于我自身理解整理的 Python 重点语法
 tags: [Python]
 category: 学习笔记

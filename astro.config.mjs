@@ -4,6 +4,7 @@ import tailwind from "@astrojs/tailwind";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 import swup from "@swup/astro";
+import { typst } from "astro-typst";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import { defineConfig } from "astro/config";
@@ -101,6 +102,11 @@ export default defineConfig({
 			}
 		}),
         svelte(),
+        typst({
+            options: { remPx: 16 },
+            target: () => "html",
+            htmlMode: "text", // 直接内嵌 body HTML，避免 hast 模式的 <body> 嵌套与公式 <img> 化
+        }),
 		sitemap(),
 		musicMetadata(),
 	],
@@ -156,6 +162,8 @@ export default defineConfig({
 		],
 	},
 	vite: {
+		// src/patches/ 里的 pnpm 补丁文件（.patch）不是 JS，Vite 会误当模块解析，这里按资产忽略
+		assetsInclude: ["**/*.patch"],
 		build: {
 			rollupOptions: {
 				onwarn(warning, warn) {
