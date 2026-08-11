@@ -8,9 +8,7 @@ import { defineCollection, z } from "astro:content";
  */
 function parsePublished(val: unknown): { date: Date; order: number } {
 	const raw =
-		val instanceof Date
-			? val.toISOString().slice(0, 10)
-			: String(val ?? "");
+		val instanceof Date ? val.toISOString().slice(0, 10) : String(val ?? "");
 	const m = raw.match(/^(\d{4}-\d{2}-\d{2})(?:-(\d+))?$/);
 	if (m) {
 		return {
@@ -61,7 +59,20 @@ const postsCollection = defineCollection({
 });
 const specCollection = defineCollection({
 	type: "content",
-	schema: z.object({}),
+	schema: z.object({
+		// 友链数据（传送门页），在 spec/links.md 的 frontmatter 中维护
+		friends: z
+			.array(
+				z.object({
+					title: z.string(),
+					imgurl: z.string(),
+					desc: z.string(),
+					siteurl: z.string(),
+				}),
+			)
+			.optional()
+			.default([]),
+	}),
 });
 export const collections = {
 	posts: postsCollection,

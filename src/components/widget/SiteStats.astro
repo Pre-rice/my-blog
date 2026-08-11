@@ -60,12 +60,12 @@ function formatNumber(num: number): string {
 // 获取最新文章日期
 const latestPost = posts.reduce(
 	(latest, post) =>
-		!latest || post.data.published > latest.data.published
-			? post
-			: latest,
+		!latest || post.data.published > latest.data.published ? post : latest,
 	posts[0],
 );
-const lastPostDate = latestPost ? latestPost.data.published.toISOString() : null;
+const lastPostDate = latestPost
+	? latestPost.data.published.toISOString()
+	: null;
 
 const stats = [
 	{

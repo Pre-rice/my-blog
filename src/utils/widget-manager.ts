@@ -1,8 +1,5 @@
 import { sidebarLayoutConfig } from "../config";
-import type {
-	SidebarLayoutConfig,
-	WidgetComponentType,
-} from "../types/config";
+import type { SidebarLayoutConfig, WidgetComponentType } from "../types/config";
 
 /** 默认附加在所有侧栏组件上的 CSS 类名 */
 const DEFAULT_COMPONENT_CLASS = "onload-animation";

@@ -17,7 +17,7 @@ import { LinkPreset } from "./types/config";
  */
 export const siteConfig: SiteConfig = {
 	// 基础设置
-	title: "Pre-rice 的个人博客",
+	title: "Pre-rice 的博客",
 	subtitle: "",
 	lang: "zh_CN",
 	siteStartDate: "2026-07-30",
@@ -51,26 +51,26 @@ export const siteConfig: SiteConfig = {
 		//   sizes: '32x32',              // （可选）favicon 尺寸，仅在有不同尺寸 favicon 时设置
 		// }
 		{
-			src: '/favicon/favicon.svg',
+			src: "/favicon/favicon.svg",
 		},
 		{
-			src: '/favicon/favicon-96.png',
-			sizes: '96x96',
+			src: "/favicon/favicon-96.png",
+			sizes: "96x96",
 		},
 		{
-			src: '/favicon/favicon-180.png',
-			sizes: '180x180',
+			src: "/favicon/favicon-180.png",
+			sizes: "180x180",
 		},
 		{
-			src: '/favicon/favicon-192.png',
-			sizes: '192x192',
+			src: "/favicon/favicon-192.png",
+			sizes: "192x192",
 		},
 		{
-			src: '/favicon/favicon-512.png',
-			sizes: '512x512',
+			src: "/favicon/favicon-512.png",
+			sizes: "512x512",
 		},
 		{
-			src: '/favicon/favicon.ico',
+			src: "/favicon/favicon.ico",
 		},
 	],
 };
@@ -84,7 +84,7 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.About,
-    	LinkPreset.Links,
+		LinkPreset.Links,
 	],
 };
 
@@ -179,9 +179,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
 	// 同 url 的条目中已填写的字段优先，未填写的字段仍会从音频元数据自动识别。
 	// 示例：{ id: 1, url: "music/url/xxx.mp3", title: "自定义标题", artist: "自定义歌手" }
-	localPlaylist: [
-	
-	],
+	localPlaylist: [],
 	// 默认占位歌曲（播放前显示）
 	defaultSong: {
 		title: "尚未播放",

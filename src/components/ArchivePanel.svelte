@@ -18,7 +18,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-        category?: string | null;
+		category?: string | null;
 		published: Date;
 	};
 }

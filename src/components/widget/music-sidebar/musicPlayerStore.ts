@@ -235,7 +235,9 @@ class MusicPlayerStore {
 
 		const song = this.state.currentSong;
 		// 从播放列表中剔除无法播放的歌曲（按 url 匹配）
-		const failedIndex = this.state.playlist.findIndex((s) => s.url === song.url);
+		const failedIndex = this.state.playlist.findIndex(
+			(s) => s.url === song.url,
+		);
 		if (failedIndex !== -1) {
 			this.state.playlist.splice(failedIndex, 1);
 			// 被剔除的位置在当前播放位置之前时，当前下标前移一位保持指向同一首

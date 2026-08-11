@@ -42,7 +42,7 @@ export enum LinkPreset {
 	Home = 0,
 	Archive = 1,
 	About = 2,
-    Links = 3,
+	Links = 3,
 }
 
 export type NavBarLink = {
@@ -128,7 +128,6 @@ export type LocalPlaylistEntry = {
 	/** 时长（秒）；0 或省略则自动读取 */
 	duration?: number;
 };
-
 
 export type MusicPlayerConfig = {
 	/** 是否启用音乐播放器 */

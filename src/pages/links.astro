@@ -1,42 +1,17 @@
 ---
-import { getEntry, render } from "astro:content";
+import { getEntry } from "astro:content";
 import Markdown from "@components/misc/Markdown.astro";
+import Comments from "@components/widget/Comments.svelte";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
-import Comments from '@components/widget/Comments.svelte'
 
 const linksPost = await getEntry("spec", "links");
 
 if (!linksPost) {
-    throw new Error("Links page content not found");
+	throw new Error("Links page content not found");
 }
 
 const { Content } = await linksPost.render();
-const items = [
-    {
-        title: "Astro",
-        imgurl: "https://astro.build/favicon.svg",
-        desc: "The web framework for content-driven websites. ⭐️ Star to support our work!",
-        siteurl: "https://github.com/withastro/astro",
-    },
-    {
-        title: "Fuwari",
-        imgurl: "https://bysansheng.cn/favicon/favicon-dark-192.png",
-        desc: "✨A static blog template built with Astro.",
-        siteurl: "https://github.com/saicaca/fuwari",
-    },
-    {
-        title: "Novic.cc",
-        imgurl: "https://novic.cc/favicon.svg",
-        desc: "Welcome! Still working on.",
-        siteurl: "https://novic.cc/",
-    },
-    {
-        title: "鬼迷宫",
-        imgurl: "👻",
-        desc: "欢迎来到鬼迷宫！这是一款结合了探索、解谜与生存元素的2D迷宫游戏。",
-        siteurl: "https://ghostmaze.novic.cc/",
-    },
-];
+const friends = linksPost.data.friends;
 ---
 
 <MainGridLayout title="传送门" description="传送门">
@@ -49,14 +24,20 @@ const items = [
                 id="friends-list"
             >
                 {
-                    items.map((item) => (
+                    friends.map((item) => (
                         <div class="friend-card flex flex-nowrap items-stretch h-28 gap-4 rounded-[var(--radius-large)]">
                             <div class="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-900">
-                                <img
-                                    src={item.imgurl}
-                                    alt="站点头像"
-                                    class="w-full h-full object-cover"
-                                />
+                                {item.imgurl.startsWith("http") ? (
+                                    <img
+                                        src={item.imgurl}
+                                        alt="站点头像"
+                                        class="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div class="w-full h-full flex items-center justify-center text-5xl leading-none">
+                                        {item.imgurl}
+                                    </div>
+                                )}
                             </div>
                             <div class="grow w-full">
                                 <div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 mb-1">

@@ -1,18 +1,22 @@
 ---
-import type { MarkdownHeading } from "astro";
 import path from "node:path";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
+import Comments from "@components/widget/Comments.svelte";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { countTypstWords, extractTypstHeadings, getSortedPosts } from "@utils/content-utils";
+import {
+	countTypstWords,
+	extractTypstHeadings,
+	getSortedPosts,
+} from "@utils/content-utils";
 import { getDir, getPostUrlBySlug } from "@utils/url-utils";
+import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
 import { licenseConfig } from "src/config";
 import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
-import Comments from '@components/widget/Comments.svelte'
 
 export async function getStaticPaths() {
 	const blogEntries = await getSortedPosts();
@@ -52,7 +56,7 @@ const jsonLd = {
 		url: Astro.site,
 	},
 	datePublished: formatDateToYYYYMMDD(entry.data.published),
-    inLanguage: siteConfig.lang.replace("_", "-"),
+	inLanguage: siteConfig.lang.replace("_", "-"),
 	// TODO include cover image here
 };
 ---

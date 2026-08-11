@@ -1,7 +1,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
+import { getCategoryUrl } from "@utils/url-utils.ts";
 import type { MarkdownHeading } from "astro";
 import GithubSlugger from "github-slugger";
-import { getCategoryUrl } from "@utils/url-utils.ts";
 
 const UNCATEGORIZED = "未分类";
 
@@ -53,7 +53,7 @@ export function countTypstWords(source: string): number {
 		.replace(/\$[\s\S]*?\$/g, " x ")
 		.replace(/#\s*[a-zA-Z][\w.-]*[^\n]*/g, " ")
 		.replace(/\\/g, " ")
-		.replace(/[\[\](){}`|,;:!?<>#=_*~.]/g, " ");
+		.replace(/[[\](){}`|,;:!?<>#=_*~.]/g, " ");
 	const cjk = body.match(/[　-〿一-鿿]/g) ?? [];
 	const words = body.match(/[a-zA-Z0-9]+/g) ?? [];
 	return cjk.length + words.length;
