@@ -2,7 +2,7 @@
 friends:
   - title: Astro
     imgurl: https://astro.build/favicon.svg
-    desc: "The web framework for content-driven websites. ⭐️ Star to support our work!"
+    desc: "The web framework for content-driven websites."
     siteurl: https://github.com/withastro/astro
   - title: Fuwari
     imgurl: https://bysansheng.cn/favicon/favicon-dark-192.png
@@ -17,7 +17,7 @@ friends:
     desc: "这里记录我的技术笔记与生活。"
     siteurl: https://ohimt.novic.cc/
   - title: 鬼迷宫
-    imgurl: "👻"
+    imgurl: "https://ghostmaze.novic.cc/favicon.png"
     desc: "欢迎来到鬼迷宫！这是一款结合了探索、解谜与生存元素的2D迷宫游戏。"
     siteurl: https://ghostmaze.novic.cc/
 ---
