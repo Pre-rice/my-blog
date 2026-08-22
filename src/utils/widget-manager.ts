@@ -33,14 +33,20 @@ export class WidgetManager {
 	 * 根据位置获取组件类型列表（保持配置中的顺序）
 	 * @param side 侧栏位置：left / right
 	 * @param position 组件位置：top / sticky
+	 * @param hasHeadings 当前页面是否有目录标题。无目录页面（如主页）时标签块改为
+	 *                    sticky 定位，随页面下翻留住；有目录页面保持标签块在 top 区。
 	 */
 	getComponents(
 		side: "left" | "right",
 		position: "top" | "sticky",
+		hasHeadings = true,
 	): WidgetComponentType[] {
 		const componentTypes = this.config.components[side] || [];
-		const isSticky = (type: WidgetComponentType) =>
-			STICKY_COMPONENTS.includes(type);
+		const isSticky = (type: WidgetComponentType) => {
+			// 无目录页面（如主页）：标签块改为 sticky，随页面下翻留住
+			if (!hasHeadings && type === "tags") return true;
+			return STICKY_COMPONENTS.includes(type);
+		};
 		return componentTypes.filter((type) =>
 			position === "sticky" ? isSticky(type) : !isSticky(type),
 		);

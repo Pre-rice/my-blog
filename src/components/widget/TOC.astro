@@ -95,7 +95,10 @@ let heading1Count = 1;
 
 <!-- 目录卡片显隐（必须全局：.toc-widget-card 落在 WidgetLayout 渲染的 <widget-layout> 元素上，
      不带本组件的 Astro scope，scoped 样式会失效）。
-     文章页有标题 → 常显；非文章页（empty）→ 淡出后隐藏。过渡效果参照“返回顶部”按钮（opacity 0.3s）。 -->
+     文章页有标题 → 常显；非文章页（empty）→ 直接隐藏且不占位。
+     用 display:none 而非 visibility:hidden，避免 sticky 区在无目录时留下空白占位，
+     让位给改为 sticky 的标签块（见 widget-manager）。目录是否为空在页面加载时即确定，
+     不会动态切换，因此无需保留淡出过渡。 -->
 <style is:global>
 	.toc-widget-card {
 		transition:
@@ -103,15 +106,10 @@ let heading1Count = 1;
 			visibility 0s linear 0.3s;
 	}
 	.toc-widget-card:has(table-of-contents.empty) {
-		opacity: 0;
-		pointer-events: none;
-		visibility: hidden;
+		display: none;
 		/* 覆盖 onload-animation 的 fade-in-up：其 animation-fill-mode: forwards
-		   会把 opacity 定格为 1，压过这里的 opacity: 0（动画值优先级更高） */
+		   会把 opacity 定格为 1，压过这里的隐藏（动画值优先级更高） */
 		animation: none !important;
-		transition:
-			opacity 0.3s ease,
-			visibility 0s linear 0.3s;
 	}
 </style>
 

@@ -28,8 +28,15 @@ const {
 	rootClass = "w-full",
 } = Astro.props;
 
-const topComponents = widgetManager.getComponents(side, "top");
-const stickyComponents = widgetManager.getComponents(side, "sticky");
+// 是否有目录：无目录页面（如主页）时标签块改为 sticky，随页面下翻留住
+const hasHeadings = (headings ?? []).length > 0;
+
+const topComponents = widgetManager.getComponents(side, "top", hasHeadings);
+const stickyComponents = widgetManager.getComponents(
+	side,
+	"sticky",
+	hasHeadings,
+);
 
 const componentMap: Record<string, AstroComponentFactory> = {
 	profile: Profile,
