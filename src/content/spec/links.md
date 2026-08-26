@@ -17,7 +17,7 @@ friends:
     desc: "这里记录我的技术笔记与生活。"
     siteurl: https://ohimt.novic.cc/
   - title: 鬼迷宫
-    imgurl: "https://ghostmaze.novic.cc/favicon.png"
+    imgurl: "https://ghostmaze.novic.cc/favicon.svg"
     desc: "欢迎来到鬼迷宫！这是一款结合了探索、解谜与生存元素的2D迷宫游戏。"
     siteurl: https://ghostmaze.novic.cc/
 ---
