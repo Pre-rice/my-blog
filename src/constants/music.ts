@@ -11,7 +11,7 @@ export const DEFAULT_VOLUME = 0.7;
 
 /** Meting API 默认地址（meting 模式） */
 export const DEFAULT_METING_API =
-	"https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r";
+	"https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&auth=:auth&r=:r";
 
 /** Meting 默认歌单 ID */
 export const DEFAULT_METING_ID = "14164869977";

@@ -408,7 +408,7 @@ class MusicPlayerStore {
 			const songs: Song[] = Array.isArray(data)
 				? data.map((item: Record<string, unknown>, index: number) => ({
 						id: Number(item.id) || index + 1,
-						title: String(item.title || "未知歌曲"),
+						title: String(item.title || item.name || "未知歌曲"),
 						// Meting API 的歌手字段为 author（如 api.i-meto.com），兼容两种写法
 						artist: String(item.artist || item.author || "未知歌手"),
 						cover: String(item.pic || item.cover || ""),

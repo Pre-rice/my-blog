@@ -171,9 +171,9 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	// 内容类型：playlist 歌单 / song 单曲 / album 专辑 / artist 歌手 / search 搜索
 	// 留空则默认 playlist（歌单）
 	type: "playlist",
-	// Meting API 地址：留空使用默认实例 https://api.i-meto.com/meting/api
+	// Meting API 地址：留空使用默认实例 https://api.injahow.cn/meting
 	// 支持占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
-	api: "https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
+	api: "https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&auth=:auth&r=:r",
 	// 本地播放列表（local 模式）：
 	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
 	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
