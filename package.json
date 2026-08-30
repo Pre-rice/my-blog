@@ -41,6 +41,7 @@
     "astro-seo": "^1.1.0",
     "astro-typst": "^0.12.3",
     "cheerio": "^1.2.0",
+    "expressive-code-collapsible": "^1.0.0",
     "github-slugger": "^2.0.0",
     "hastscript": "^9.0.1",
     "katex": "^0.16.27",

@@ -10,6 +10,5 @@ export function remarkReadingTime() {
 			1,
 			Math.round(readingTime.minutes),
 		);
-		data.astro.frontmatter.words = readingTime.words;
 	};
 }

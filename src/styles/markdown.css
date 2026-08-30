@@ -71,6 +71,17 @@
         opacity: 1;
     }
 
+    /* 折叠代码块插件：仅保留右上角（标题栏内）展开按钮，隐藏底部浮层按钮，观感更整洁 */
+    /* 加 .expressive-code 提升特异性，压过插件 baseStyles 的 .expressive-code .ec-collapse__toggle { display:flex } */
+    .expressive-code .ec-collapse__toggle {
+        display: none;
+    }
+
+    /* 复制按钮定位到代码区（pre）右上角，位于标题栏下方，避免与右上角展开按钮重叠 */
+    figure pre {
+        position: relative;
+    }
+
     .copy-btn-icon {
         @apply absolute top-1/2 left-1/2 transition -translate-x-1/2 -translate-y-1/2 w-4 h-4 fill-white pointer-events-none;
     }

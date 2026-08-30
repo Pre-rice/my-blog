@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import { typst } from "astro-typst";
+import { pluginCollapsible } from "expressive-code-collapsible";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components"; /* Render the custom directive content */
 import rehypeKatex from "rehype-katex";
@@ -24,7 +25,6 @@ import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.m
 import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
-import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
 // https://astro.build/config
 export default defineConfig({
@@ -61,6 +61,15 @@ export default defineConfig({
 			themes: [expressiveCodeConfig.theme, expressiveCodeConfig.theme],
 			plugins: [
 				pluginCollapsibleSections(),
+				pluginCollapsible({
+					// 阈值设极大：不自动折叠，仅对 meta 显式标注 `collapse` 的代码块折叠
+					lineThreshold: Infinity,
+					defaultCollapsed: true,
+					expandButtonText: "展开代码",
+					collapseButtonText: "收起代码",
+					expandedAnnouncement: "代码块已展开",
+					collapsedAnnouncement: "代码块已收起",
+				}),
 				pluginLineNumbers(),
 				pluginLanguageBadge(),
 				pluginCustomCopyButton(),
@@ -114,7 +123,6 @@ export default defineConfig({
 	markdown: {
 		remarkPlugins: [
 			remarkMath,
-			remarkReadingTime,
 			remarkExcerpt,
 			remarkGithubAdmonitionsToDirectives,
 			remarkDirective,

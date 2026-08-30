@@ -3,7 +3,7 @@
 import type { CollectionEntry } from "astro:content";
 import path from "node:path";
 import { Icon } from "astro-icon/components";
-import { countTypstWords } from "../utils/content-utils";
+import { countEntryWords } from "../utils/content-utils";
 import { getDir, getTagUrl } from "../utils/url-utils";
 import ImageWrapper from "./misc/ImageWrapper.astro";
 import PostMetadata from "./PostMeta.astro";
@@ -44,9 +44,7 @@ const coverWidth = "28%";
 // biome-ignore lint/suspicious/noExplicitAny: .typ 与 .md 的 render 返回结构不同
 const rendered = (await entry.render()) as any;
 const { remarkPluginFrontmatter = {} } = rendered;
-const words = entry.id.endsWith(".typ")
-	? countTypstWords(String(entry.body ?? ""))
-	: remarkPluginFrontmatter.words;
+const words = countEntryWords(entry.body, entry.id);
 ---
 <div class:list={["card-base flex flex-col-reverse md:flex-col w-full rounded-[var(--radius-large)] overflow-hidden relative", className]} style={style}>
     <div class:list={["pl-6 md:pl-9 pr-6 md:pr-2 pt-6 md:pt-7 pb-6 relative", {"w-full md:w-[calc(100%_-_52px_-_12px)]": !hasCover, "w-full md:w-[calc(100%_-_var(--coverWidth)_-_12px)]": hasCover}]}>

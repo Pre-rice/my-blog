@@ -5,7 +5,8 @@ import Markdown from "@components/misc/Markdown.astro";
 import Comments from "@components/widget/Comments.svelte";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import {
-	countTypstWords,
+	countCodeLines,
+	countEntryWords,
 	extractTypstHeadings,
 	getSortedPosts,
 } from "@utils/content-utils";
@@ -27,22 +28,19 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-// .typ 文章的 render 没有 remarkPluginFrontmatter/headings，需要兜底；字数从源码统计
+// .typ 文章的 render 没有 headings，需要兜底；字数/代码行数/分钟数统一从源码统计
 // biome-ignore lint/suspicious/noExplicitAny: .typ 与 .md 的 render 返回结构不同
 const rendered = (await entry.render()) as any;
 const { Content } = rendered;
-const { remarkPluginFrontmatter = {} } = rendered;
 const isTyp = entry.id.endsWith(".typ");
 // .typ 的 render 不提供 headings，手动从源码解析标题供 TOC 使用
 const headings: MarkdownHeading[] = isTyp
 	? extractTypstHeadings(String(entry.body ?? ""))
 	: (rendered.headings ?? []);
-const words = isTyp
-	? countTypstWords(String(entry.body ?? ""))
-	: (remarkPluginFrontmatter.words ?? 0);
-const minutes = isTyp
-	? Math.max(1, Math.round(words / 200))
-	: (remarkPluginFrontmatter.minutes ?? 0);
+const words = countEntryWords(entry.body, entry.id);
+const codeLines = countCodeLines(String(entry.body ?? ""));
+// 分钟数：文字按 200 字/分钟，每行代码折算 5 个字（约 40 行/分钟）
+const minutes = Math.max(1, Math.round((words + codeLines * 5) / 200));
 
 const jsonLd = {
 	"@context": "https://schema.org",
@@ -66,7 +64,7 @@ const jsonLd = {
         <div id="post-container" class:list={["card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
             {}
         ]}>
-            <!-- word count and reading time -->
+            <!-- word count, code lines and reading time -->
             <div class="flex flex-row text-black/30 dark:text-white/30 gap-5 mb-3 transition onload-animation">
                 <div class="flex flex-row items-center">
                     <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
@@ -74,6 +72,14 @@ const jsonLd = {
                     </div>
                     <div class="text-sm">{words} 字</div>
                 </div>
+                {codeLines > 0 && (
+                <div class="flex flex-row items-center">
+                    <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+                        <Icon name="material-symbols:code"></Icon>
+                    </div>
+                    <div class="text-sm">{codeLines} 行</div>
+                </div>
+                )}
                 <div class="flex flex-row items-center">
                     <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
                         <Icon name="material-symbols:schedule-outline-rounded"></Icon>

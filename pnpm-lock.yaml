@@ -91,6 +91,9 @@ importers:
       cheerio:
         specifier: ^1.2.0
         version: 1.2.0
+      expressive-code-collapsible:
+        specifier: ^1.0.0
+        version: 1.0.0(@expressive-code/core@0.41.4)
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
@@ -3125,6 +3128,12 @@ packages:
 
   eventemitter3@5.0.1:
     resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
+  expressive-code-collapsible@1.0.0:
+    resolution: {integrity: sha512-AHyvB7zcC4NNNpZxDbB1Vpbk+Myz6l08TcexPnaIJncz3bspFrdlamvEs2AC4P9/LdfFAozNUojy+tPub25HjA==}
+    engines: {node: '>=20.3.0'}
+    peerDependencies:
+      '@expressive-code/core': ^0.44.1
 
   expressive-code@0.41.4:
     resolution: {integrity: sha512-A9aFLhgqLkL6VSfqYkPqkJVMtA90/bhCLmUO7L3/a1xWISNMcHoCS6d6i8ePwi8HvHr3xRLswHTNt6NheTjdXA==}
@@ -9164,6 +9173,10 @@ snapshots:
   eventemitter3@4.0.7: {}
 
   eventemitter3@5.0.1: {}
+
+  expressive-code-collapsible@1.0.0(@expressive-code/core@0.41.4):
+    dependencies:
+      '@expressive-code/core': 0.41.4
 
   expressive-code@0.41.4:
     dependencies:

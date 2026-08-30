@@ -7,6 +7,8 @@
   draft: false,
 ))<frontmatter>
 
+#html.elem("p", attrs: (style: "margin-top: -1em;"))
+
 == 给你的 Fuwari 添加新的页面
 
 请参考 AULyPc 大佬的 #link("https://aulypc1.github.io/posts/website/add_friendspage_in_fuwari/")[这篇文章] ，其中详细说明了如何给 Fuwari 添加“友链”页面。

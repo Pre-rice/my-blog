@@ -43,20 +43,112 @@ export type PostForList = {
 	data: CollectionEntry<"posts">["data"];
 };
 /**
+ * 统计行内代码内容的字数：CJK 字符逐个计数，英文/数字按连续片段计数。
+ */
+function countInlineCode(code: string): number {
+	const cjk = code.match(/[一-龥぀-ゟ゠-ヿ가-힯　-〿＀-￯]/g) ?? [];
+	const words = code.match(/[a-zA-Z0-9]+/g) ?? [];
+	return cjk.length + words.length;
+}
+
+/**
  * 统计 typst 源码的可读字数（用于 .typ 文章展示"xx 字"）。
- * 粗略做法：去掉 frontmatter、公式（每段算 1 词）、命令与符号后，
- * 中文字符逐个计数，英文/数字按连续片段计数。
+ * 与 countMarkdownWords 同口径：剔除 frontmatter、围栏代码块、公式（每段算 1 词）、
+ * 命令与链接 URL 后，中文字符逐个计数，英文/数字按连续片段计数；链接保留可见文字，行内代码计入。
  */
 export function countTypstWords(source: string): number {
-	const body = source
+	// 先剔除 frontmatter 与围栏代码块
+	let text = source
 		.replace(/#metadata\s*\([\s\S]*?\)\s*<frontmatter>/, "")
+		.replace(/```[\s\S]*?```/g, "");
+
+	// 行内代码单独计数（内容计入），再整体移除，避免被命令/符号正则误伤
+	let inlineCount = 0;
+	for (const block of text.match(/`[^`]+`/g) ?? []) {
+		inlineCount += countInlineCode(block.slice(1, -1));
+	}
+	text = text.replace(/`[^`]+`/g, " ");
+
+	// 公式每段算 1 词
+	text = text
 		.replace(/\$[\s\S]*?\$/g, " x ")
+		// 链接：带可见文字的保留文字，纯 URL 链接剔除
+		.replace(/#link\s*\([^)]*\)\s*\[([^\]]*)\]/g, "$1")
+		.replace(/#link\s*\([^)]*\)/g, " ")
 		.replace(/#\s*[a-zA-Z][\w.-]*[^\n]*/g, " ")
 		.replace(/\\/g, " ")
-		.replace(/[[\](){}`|,;:!?<>#=_*~.]/g, " ");
-	const cjk = body.match(/[　-〿一-鿿]/g) ?? [];
-	const words = body.match(/[a-zA-Z0-9]+/g) ?? [];
-	return cjk.length + words.length;
+		.replace(/[[\](){}`|,;:!?<>#=_*~.-]/g, " ");
+
+	// CJK 字符逐个计数（汉字/假名/韩文/CJK 标点/全角符号），英文与数字按连续片段计数
+	const cjk = text.match(/[一-龥぀-ゟ゠-ヿ가-힯　-〿＀-￯]/g) ?? [];
+	const words = text.match(/[a-zA-Z0-9]+/g) ?? [];
+
+	return cjk.length + words.length + inlineCount;
+}
+
+/**
+ * 统计 markdown 源码的可读字数（用于 .md 文章与 spec 页面的字数展示）。
+ * 与 countTypstWords 同口径：剔除围栏代码块、HTML 标签、公式（每段算 1 词）、
+ * 链接 URL、提示框标记等非正文内容后，中文字符逐个计数，英文/数字按连续片段计数；
+ * 图片/链接保留可见文字（alt / 链接文字），行内代码计入。
+ */
+export function countMarkdownWords(source: string): number {
+	// 先剔除围栏代码块
+	let text = source.replace(/```[\s\S]*?```/g, "");
+
+	// 行内代码单独计数（内容计入），再整体移除，避免被公式/链接/HTML 等正则误伤
+	let inlineCount = 0;
+	for (const block of text.match(/`[^`]+`/g) ?? []) {
+		inlineCount += countInlineCode(block.slice(1, -1));
+	}
+	text = text.replace(/`[^`]+`/g, " ");
+
+	// 公式每段算 1 词，HTML 标签剔除
+	text = text
+		.replace(/\$\$[\s\S]*?\$\$/g, " x ")
+		.replace(/\$[^$\n]*\$/g, " x ")
+		.replace(/<[^>]+>/g, " ");
+
+	// 图片 / 链接：保留可见文字（alt / 链接文字），剔除 URL
+	text = text
+		.replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+
+	// GitHub 提示框 / 卡片 directive 标记整体剔除
+	text = text.replace(/:::[a-zA-Z-]*(?:\{[^}]*\})?/g, " ");
+
+	// 其余 ASCII 标点与 Markdown 标记符号统一当分隔符
+	text = text.replace(/[[\](){}<>#*_~|;:!?,."'$=+\\/`-]/g, " ");
+
+	// CJK 字符逐个计数（汉字/假名/韩文/CJK 标点/全角符号），英文与数字按连续片段计数
+	const cjk = text.match(/[一-龥぀-ゟ゠-ヿ가-힯　-〿＀-￯]/g) ?? [];
+	const words = text.match(/[a-zA-Z0-9]+/g) ?? [];
+
+	return cjk.length + words.length + inlineCount;
+}
+
+/**
+ * 按文件类型统计文章/页面的可读字数：.typ 走 countTypstWords，其余按 markdown 统计。
+ * 单篇卡片、文章页、侧栏总字数共用此函数，保证全站口径一致。
+ */
+export function countEntryWords(body: string | undefined, id: string): number {
+	if (!body) return 0;
+	return id.endsWith(".typ") ? countTypstWords(body) : countMarkdownWords(body);
+}
+
+/**
+ * 统计文章源码中围栏代码块（```）内的总行数（用于文章页顶部显示"xx 行"）。
+ * 空代码块不计，行内代码不算行。
+ */
+export function countCodeLines(source: string): number {
+	const blocks = source.match(/```[\s\S]*?```/g) ?? [];
+	let lines = 0;
+	for (const block of blocks) {
+		const body = block.replace(/^```[^\n]*\n/, "").replace(/\n?```$/, "");
+		if (body.trim().length === 0) continue;
+		lines += body.split("\n").length;
+	}
+	return lines;
 }
 
 /**
