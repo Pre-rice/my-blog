@@ -68,7 +68,7 @@ const { playlist, currentIndex, isPlaying, show, onClose, onPlaySong }: Props =
 
 	.playlist-content {
 		overflow-y: auto;
-		max-height: 12rem;
+		max-height: 10rem;
 		padding-right: 0.35rem;
 		scroll-behavior: smooth;
 		padding-bottom: 0.25rem;

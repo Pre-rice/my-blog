@@ -94,6 +94,9 @@ importers:
       expressive-code-collapsible:
         specifier: ^1.0.0
         version: 1.0.0(@expressive-code/core@0.41.4)
+      fetch-jsonp:
+        specifier: ^1.4.0
+        version: 1.4.0
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
@@ -3177,6 +3180,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fetch-jsonp@1.4.0:
+    resolution: {integrity: sha512-SmOI6UshTUzQ1O+1CJDg31AE4VUIfAO4xfVAy/sH03h4Obml3BnuhTopdFaJMI21T94RfRvfTgTIvV0X8GnJ2A==}
 
   figures@1.7.0:
     resolution: {integrity: sha512-UxKlfCRuCBxSXU4C6t9scbDyWZ4VlaFFdojKtzJuSkuOBQ5CNFum+zZXFwHjo+CxBC1t6zlYPgHIgFjL8ggoEQ==}
@@ -9226,6 +9232,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.3):
     optionalDependencies:
       picomatch: 4.0.3
+
+  fetch-jsonp@1.4.0: {}
 
   figures@1.7.0:
     dependencies:

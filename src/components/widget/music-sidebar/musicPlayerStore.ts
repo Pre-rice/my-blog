@@ -1,3 +1,4 @@
+import fetchJsonp from "fetch-jsonp";
 import { musicPlayerConfig } from "../../../config";
 import {
 	DEFAULT_METING_API,
@@ -54,6 +55,51 @@ const FALLBACK_SONG: Song = {
 	duration: 0,
 	id: 0,
 };
+
+/**
+ * 通过 QQ 音乐 vkey 接口（jsonp）解析真实音频地址。
+ * Meting API 部署在海外时 QQ 音乐返回的 url 是 "@..." 占位或空串，需用 songmid 重新请求该接口获取。
+ */
+async function resolveTencentUrl(songmid: string): Promise<string> {
+	const data = {
+		req_0: {
+			module: "vkey.GetVkeyServer",
+			method: "CgiGetVkey",
+			param: {
+				guid: String(Math.floor(1e7 * Math.random())),
+				songmid: [songmid],
+				songtype: [0],
+				uin: "",
+				loginflag: 1,
+				platform: "20",
+			},
+		},
+		comm: { uin: "", format: "json", ct: 19, cv: 0, authst: "" },
+	};
+	const params = new URLSearchParams({
+		"-": "getplaysongvkey",
+		g_tk: "5381",
+		loginUin: "",
+		hostUin: "0",
+		format: "json",
+		inCharset: "utf8",
+		outCharset: "utf-8¬ice=0",
+		platform: "yqq.json",
+		needNewCode: "0",
+		data: JSON.stringify(data),
+	});
+	const url = `https://u.y.qq.com/cgi-bin/musicu.fcg?${params.toString()}`;
+	const response = await fetchJsonp(url);
+	const result = await response.json();
+	const info = result?.req_0?.data;
+	const purl = info?.midurlinfo?.[0]?.purl || "";
+	const domain =
+		info?.sip?.find((i: string) => !i.startsWith("http://ws")) ||
+		info?.sip?.[0] ||
+		"";
+	if (!purl || !domain) throw new Error("无法解析音频地址");
+	return `${domain}${purl}`.replace("http://", "https://");
+}
 
 class MusicPlayerStore {
 	private audio: HTMLAudioElement | null = null;
@@ -414,6 +460,8 @@ class MusicPlayerStore {
 						cover: String(item.pic || item.cover || ""),
 						url: String(item.url || ""),
 						duration: Number(item.duration) || 0,
+						// 海外部署时 QQ 音乐返回的 url 是 jsonp 占位，播放前需用 songmid 解析真实地址
+						songmid: String(item.songmid || ""),
 					}))
 				: [];
 
@@ -431,10 +479,23 @@ class MusicPlayerStore {
 		}
 	}
 
-	private loadSong(song: Song, autoplay = true): void {
-		if (!this.audio || !song.url) return;
+	private async loadSong(song: Song, autoplay = true): Promise<void> {
+		if (!this.audio) return;
 
-		this.state.currentSong = { ...song };
+		let target = song;
+
+		// url 为空或为 @ jsonp 占位时，用 songmid 解析真实音频地址（解析结果缓存到歌单）
+		if (target.songmid && !target.url.startsWith("http")) {
+			try {
+				target = { ...target, url: await resolveTencentUrl(target.songmid) };
+				const i = this.state.playlist.findIndex((s) => s.id === target.id);
+				if (i !== -1) this.state.playlist[i] = target;
+			} catch {
+				target = { ...target, url: "" };
+			}
+		}
+
+		this.state.currentSong = { ...target };
 		this.state.isLoading = true;
 		this.state.currentTime = 0;
 		this.state.duration = 0;
@@ -442,10 +503,33 @@ class MusicPlayerStore {
 		this.state.errorMessage = "";
 		this.state.showError = false;
 		// 记入最近播放窗口（自动切歌、手动点歌都算）
-		this.rememberPlayed(song);
+		this.rememberPlayed(target);
 		this.broadcastState();
 
-		this.audio.src = song.url;
+		// 解析失败时剔除该歌并自动切下一首
+		if (!target.url) {
+			const failedIndex = this.state.playlist.findIndex(
+				(s) => s.id === target.id,
+			);
+			if (failedIndex !== -1) this.state.playlist.splice(failedIndex, 1);
+			this.showError(`歌曲「${target.title}」无法播放，已从列表移除`);
+			if (this.state.playlist.length > 0) {
+				if (this.state.isShuffled) {
+					this.playIndex(this.nextShuffledIndex());
+				} else {
+					this.playIndex(
+						Math.min(this.state.currentIndex, this.state.playlist.length - 1),
+					);
+				}
+			} else {
+				this.state.isPlaying = false;
+				this.state.currentTime = 0;
+				this.broadcastState();
+			}
+			return;
+		}
+
+		this.audio.src = target.url;
 		this.audio.load();
 
 		// 加载超时兜底：部分坏链接不触发 error 而是无限缓冲，超时后按失败剔除

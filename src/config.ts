@@ -95,7 +95,7 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "assets/images/avatar.png",
 	name: "Pre-rice",
-	bio: "热爱探索与分享，期待思想的碰撞",
+	bio: "热爱探索与分享\n期待思想的碰撞",
 	links: [
 		{
 			name: "QQ",
@@ -173,7 +173,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	type: "playlist",
 	// Meting API 地址：留空使用默认实例 https://api.injahow.cn/meting
 	// 支持占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
-	api: "https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&auth=:auth&r=:r",
+	api: "https://music.novic.cc/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
 	// 本地播放列表（local 模式）：
 	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
 	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
