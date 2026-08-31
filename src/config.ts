@@ -165,9 +165,9 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	server: "tencent",
 	// 内容类型：playlist 歌单（默认） / song 单曲 / album 专辑 / artist 歌手 / search 搜索
 	type: "playlist",
-	// Meting API 地址
-	// 占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
-	api: "https://music.novic.cc/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
+	// 歌单数据来源：现为静态文件（由 scripts/fetch-playlist.mjs 生成），同源加载，永不失败。
+	// 想切回在线 Meting API 时，改回形如 https://xxx/api?server=:server&type=:type&id=:id&auth=:auth&r=:r 的地址即可。
+	api: "/music/playlist.json",
 	// local 模式配置
 	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
 	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目
