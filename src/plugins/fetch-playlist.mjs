@@ -8,10 +8,10 @@
  * 生成时逐首验证能否解析出真实音频地址，解析不出的（VIP/版权受限）直接剔除，
  * 保证歌单里每首都可播放，前端无需再运行时剔除。
  *
- * 构建时由 pnpm build 自动调用；也可手动运行：
+ * 仅本机手动运行（构建时不再自动调用——Vercel 构建环境访问 QQ vkey 接口受限，会只剩极少数歌）：
  *   node src/plugins/fetch-playlist.mjs [歌单ID]   （歌单ID 默认 5715312555）
  *
- * 容错：生成失败时若已存在 playlist.json 则复用旧文件继续（避免本地构建被网络问题打断）。
+ * 生成后需提交 git，线上构建直接使用仓库里的文件。容错：生成失败时若已存在 playlist.json 则复用旧文件。
  */
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";

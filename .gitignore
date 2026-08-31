@@ -29,6 +29,3 @@ yarn.lock
 # ide
 .idea
 *.iml
-
-# 构建时自动生成的歌单
-public/music/playlist.json

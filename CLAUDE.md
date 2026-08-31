@@ -68,4 +68,4 @@
 ## 8. 部署
 
 - `site` 为 `https://prerice.novic.cc/`；`trailingSlash: "always"`，内部链接注意尾部斜杠。
-- 音乐歌单为静态文件 `public/music/playlist.json`（构建时生成，不入 git），播放时按 `songmid` 实时解析 QQ 音乐地址。
+- 音乐歌单为静态文件 `public/music/playlist.json`（本地 `node src/plugins/fetch-playlist.mjs` 生成后提交 git，构建时不再自动生成——Vercel 构建环境访问 QQ vkey 接口受限），播放时按 `songmid` 实时解析 QQ 音乐地址。
