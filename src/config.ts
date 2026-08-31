@@ -152,33 +152,26 @@ export const sidebarLayoutConfig: SidebarLayoutConfig = {
 
 /**
  * 音乐播放器配置
- *
- * mode:
- *  - "local": 播放本地音频文件（自动扫描 /public/music/url/，localPlaylist 可选覆盖）
- *  - "meting": 通过 Meting API 拉取在线歌单（需配置 id）
  */
 export const musicPlayerConfig: MusicPlayerConfig = {
 	// 是否启用音乐播放器功能
 	enable: true,
 	// 播放器模式：local 本地文件 / meting 在线歌单
 	mode: "meting",
-	// 以下为 meting 模式配置（将 mode 改为 "meting" 后生效）
-	// 歌单 ID：取歌单页面 URL 中的标识，不同平台格式不同（见 server 注释）
+	// meting 模式配置
+	// 歌单 ID：取歌单页面 URL 中的标识
 	id: "5715312555",
-	// 音乐源服务器：netease 网易云 / tencent QQ音乐 / kugou 酷狗 / xiami 虾米 / baidu 百度
-	// 留空则默认 netease。网易云歌单 ID 见 play?list 链接；QQ音乐歌单 ID 为链接末尾一串字母数字
+	// 音乐源服务器：netease 网易云 / tencent QQ音乐
 	server: "tencent",
-	// 内容类型：playlist 歌单 / song 单曲 / album 专辑 / artist 歌手 / search 搜索
-	// 留空则默认 playlist（歌单）
+	// 内容类型：playlist 歌单（默认） / song 单曲 / album 专辑 / artist 歌手 / search 搜索
 	type: "playlist",
-	// Meting API 地址：留空使用默认实例 https://api.injahow.cn/meting
-	// 支持占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
+	// Meting API 地址
+	// 占位符 :server :type :id :auth :r（分别替换为服务器/类型/ID/授权/时间戳）
 	api: "https://music.novic.cc/api?server=:server&type=:type&id=:id&auth=:auth&r=:r",
-	// 本地播放列表（local 模式）：
+	// local 模式配置
 	// 留空（[]）= 构建时自动扫描 /public/music/url/ 目录，并自动识别每首歌的标题/歌手/封面/时长。
-	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目：
+	// 如需覆盖某首歌的显示信息，或加入目录外的歌（如在线地址），可按 url 添加条目
 	// 同 url 的条目中已填写的字段优先，未填写的字段仍会从音频元数据自动识别。
-	// 示例：{ id: 1, url: "music/url/xxx.mp3", title: "自定义标题", artist: "自定义歌手" }
 	localPlaylist: [],
 	// 默认占位歌曲（播放前显示）
 	defaultSong: {

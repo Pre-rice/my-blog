@@ -479,19 +479,83 @@ class MusicPlayerStore {
 		}
 	}
 
-	private async loadSong(song: Song, autoplay = true): Promise<void> {
+	private async loadSong(
+		song: Song,
+		autoplay = true,
+		fromList = false,
+	): Promise<void> {
 		if (!this.audio) return;
 
 		let target = song;
 
-		// url 为空或为 @ jsonp 占位时，用 songmid 解析真实音频地址（解析结果缓存到歌单）
-		if (target.songmid && !target.url.startsWith("http")) {
+		// 预解析阶段：meting 在线歌单在切画面之前先解析真实音频地址。
+		// 无法解析（VIP/版权受限）的歌曲直接剔除并顺延到下一首可播歌曲，
+		// 期间不更新播放画面，避免切歌瞬间闪现坏歌导致画面闪动。
+		while (target.songmid && !target.url.startsWith("http")) {
 			try {
 				target = { ...target, url: await resolveTencentUrl(target.songmid) };
+				// 解析结果缓存回歌单，下次切到同一首时无需再请求
 				const i = this.state.playlist.findIndex((s) => s.id === target.id);
 				if (i !== -1) this.state.playlist[i] = target;
+				break;
 			} catch {
-				target = { ...target, url: "" };
+				// 解析失败：从歌单剔除该歌（按 id 匹配）
+				const failedIndex = this.state.playlist.findIndex(
+					(s) => s.id === target.id,
+				);
+				if (failedIndex !== -1) {
+					this.state.playlist.splice(failedIndex, 1);
+					// 被剔除的歌在当前播放位置之前时，当前下标前移一位保持指向同一首
+					if (failedIndex < this.state.currentIndex) {
+						this.state.currentIndex -= 1;
+					}
+					// 窗口方案无固定队列，无需重洗；清掉窗口内已失效的歌
+					this.recentPlayed = this.recentPlayed.filter((u) =>
+						this.state.playlist.some((s) => s.url === u),
+					);
+					// 歌单变短后窗口容量（歌单一半）同步收缩
+					const cap = Math.max(1, Math.floor(this.state.playlist.length / 2));
+					if (this.recentPlayed.length > cap) {
+						this.recentPlayed.splice(0, this.recentPlayed.length - cap);
+					}
+				}
+
+				// 手动点击列表中的坏歌：只从歌单删除，不切换播放，保持当前歌曲继续
+				if (fromList) {
+					// 恢复当前下标指回正在播放的那首歌（按 id 找回）
+					const currentId = this.state.currentSong.id;
+					const restoredIndex = this.state.playlist.findIndex(
+						(s) => s.id === currentId,
+					);
+					if (restoredIndex !== -1) {
+						this.state.currentIndex = restoredIndex;
+					} else {
+						// 未播放状态（占位歌不在歌单）：下标保持在有效范围内即可
+						this.state.currentIndex = Math.min(
+							this.state.currentIndex,
+							this.state.playlist.length - 1,
+						);
+					}
+					this.broadcastState();
+					return;
+				}
+
+				// 歌单已空：无可播放歌曲，停止并提示
+				if (this.state.playlist.length === 0) {
+					this.state.isPlaying = false;
+					this.state.currentTime = 0;
+					this.audio?.pause();
+					this.showError("歌单中无可播放的歌曲");
+					this.broadcastState();
+					return;
+				}
+
+				// 选下一首候选：随机模式从窗口外随机选，顺序模式接当前下标的下一首
+				const nextIndex = this.state.isShuffled
+					? this.nextShuffledIndex()
+					: Math.min(this.state.currentIndex, this.state.playlist.length - 1);
+				this.state.currentIndex = nextIndex;
+				target = this.state.playlist[nextIndex];
 			}
 		}
 
@@ -506,7 +570,7 @@ class MusicPlayerStore {
 		this.rememberPlayed(target);
 		this.broadcastState();
 
-		// 解析失败时剔除该歌并自动切下一首
+		// 兜底：仍拿不到 url（本地模式等）时剔除该歌并自动切下一首
 		if (!target.url) {
 			const failedIndex = this.state.playlist.findIndex(
 				(s) => s.id === target.id,
@@ -560,7 +624,7 @@ class MusicPlayerStore {
 		}
 	}
 
-	playIndex(index: number): void {
+	playIndex(index: number, fromList = false): void {
 		if (
 			!this.state.playlist.length ||
 			index < 0 ||
@@ -569,15 +633,15 @@ class MusicPlayerStore {
 			return;
 		}
 		this.state.currentIndex = index;
-		this.loadSong(this.state.playlist[index], true);
+		this.loadSong(this.state.playlist[index], true, fromList);
 	}
 
 	toggle(): void {
 		if (!this.state.playlist.length) return;
 
 		if (!this.state.currentSong.url && this.state.playlist.length > 0) {
-			// 还没有加载任何歌曲，直接播放第一首
-			this.playIndex(0);
+			// 还没有加载任何歌曲：随机模式随机选一首，否则播放第一首
+			this.playIndex(this.state.isShuffled ? this.nextShuffledIndex() : 0);
 			return;
 		}
 

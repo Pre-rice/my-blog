@@ -59,7 +59,8 @@ function togglePlaylistView() {
 }
 
 function playIndex(index: number) {
-	musicPlayerStore.playIndex(index);
+	// 用户手动点击列表切歌：若点中的是 VIP/无法播放的歌，只将其从列表删除，不打断当前播放
+	musicPlayerStore.playIndex(index, true);
 }
 
 function seek(time: number) {
