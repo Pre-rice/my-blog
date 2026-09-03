@@ -29,4 +29,8 @@
 
 至于具体的实现方式，我推荐参考 #link("https://github.com/LyraVoid/Mizuki")[Mizuki] 这个博客主题。它相比 Fuwari 多了很多功能，其中可能就有你需要的。你可以把该仓库的源码下载到本地，然后参考它改造自己的博客。
 
+你也可以查看本博客的 github 仓库，参考其中的实现方式。
+
+::github{repo="Pre-rice/my-blog"}
+
 以上便是我对博客做的简单改造，希望对你有所启发。

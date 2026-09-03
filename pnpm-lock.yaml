@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   astro-typst:
-    hash: joryy56hjnn7poxhi2h2ps46i4
+    hash: 4eu2s356lxzdwsjoarupgd237q
     path: src/patches/astro-typst.patch
 
 importers:
@@ -87,7 +87,7 @@ importers:
         version: 1.1.0(prettier@3.7.4)(typescript@5.9.3)
       astro-typst:
         specifier: ^0.12.3
-        version: 0.12.3(patch_hash=joryy56hjnn7poxhi2h2ps46i4)(@myriaddreamin/typst-ts-node-compiler@0.8.0-rc3)(@myriaddreamin/typst-ts-renderer@0.7.0)(@myriaddreamin/typst.ts@0.7.0(@myriaddreamin/typst-ts-renderer@0.7.0))(astro@5.13.10(@types/node@24.5.2)(jiti@1.21.7)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@0.64.0)(terser@5.43.1)(typescript@5.9.3)(yaml@2.8.2))(cheerio@1.2.0)(rollup@2.79.2)
+        version: 0.12.3(patch_hash=4eu2s356lxzdwsjoarupgd237q)(@myriaddreamin/typst-ts-node-compiler@0.8.0-rc3)(@myriaddreamin/typst-ts-renderer@0.7.0)(@myriaddreamin/typst.ts@0.7.0(@myriaddreamin/typst-ts-renderer@0.7.0))(astro@5.13.10(@types/node@24.5.2)(jiti@1.21.7)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@0.64.0)(terser@5.43.1)(typescript@5.9.3)(yaml@2.8.2))(cheerio@1.2.0)(rollup@2.79.2)
       cheerio:
         specifier: ^1.2.0
         version: 1.2.0
@@ -8223,7 +8223,7 @@ snapshots:
       - prettier-plugin-astro
       - typescript
 
-  astro-typst@0.12.3(patch_hash=joryy56hjnn7poxhi2h2ps46i4)(@myriaddreamin/typst-ts-node-compiler@0.8.0-rc3)(@myriaddreamin/typst-ts-renderer@0.7.0)(@myriaddreamin/typst.ts@0.7.0(@myriaddreamin/typst-ts-renderer@0.7.0))(astro@5.13.10(@types/node@24.5.2)(jiti@1.21.7)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@0.64.0)(terser@5.43.1)(typescript@5.9.3)(yaml@2.8.2))(cheerio@1.2.0)(rollup@2.79.2):
+  astro-typst@0.12.3(patch_hash=4eu2s356lxzdwsjoarupgd237q)(@myriaddreamin/typst-ts-node-compiler@0.8.0-rc3)(@myriaddreamin/typst-ts-renderer@0.7.0)(@myriaddreamin/typst.ts@0.7.0(@myriaddreamin/typst-ts-renderer@0.7.0))(astro@5.13.10(@types/node@24.5.2)(jiti@1.21.7)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@0.64.0)(terser@5.43.1)(typescript@5.9.3)(yaml@2.8.2))(cheerio@1.2.0)(rollup@2.79.2):
     dependencies:
       '@myriaddreamin/typst-ts-node-compiler': 0.8.0-rc3
       '@myriaddreamin/typst-ts-renderer': 0.7.0

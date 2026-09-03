@@ -21,58 +21,99 @@ index 9ad53809f2bffb1e0d2b74f32f2a0c4376dfbe7e..591a2c01d64a747d0cd0cc4b3925fea6
                  });
              },
 diff --git a/dist/lib/vite.js b/dist/lib/vite.js
-index 3a9a8f6..fc230f4 100644
+index 3a9a8f6..b7ef193 100644
 --- a/dist/lib/vite.js
 +++ b/dist/lib/vite.js
-@@ -6,6 +6,7 @@ import { rehypeTypstx } from "./rehype.js";
+@@ -6,6 +6,271 @@ import { rehypeTypstx } from "./rehype.js";
  import logger from "./logger.js";
  import path from "node:path/posix";
  import { getAstroConfig } from "./store.js";
 +import { load } from "cheerio";
- function isTypstFile(id) {
-     return /\.typ(\?(html|svg|html&body|body&html|html-text|html-hast))?$/.test(id);
- }
-@@ -121,6 +122,27 @@ export default function (config) {
-                     }
-                     html = await rehypeTypstx(html, astroConfig.markdown?.rehypePlugins ?? []);
-                 }
-+                else if (htmlMode === 'text') {
-+                    // —— 与 .md 格式统一后处理 ——
-+                    const $ = load(html);
-+                    // (a) 标题降级：typst 的 `=` 渲染为 <h2>，整体降一级与 md 的 `#` 对齐
-+                    for (const [sel, tag] of [["h2", "h1"], ["h3", "h2"], ["h4", "h3"], ["h5", "h4"], ["h6", "h5"]]) {
-+                        $(sel).each(function () {
-+                            $(this).replaceWith(`<${tag}>${$(this).html()}</${tag}>`);
-+                        });
-+                    }
-+                    // (b) 松列表解包：typst 的 li 内容包在 <p> 里（结构包裹），
-+                    //     解开这些 <p> 让 li 内直接为文本；li 内全是 <p> 且不止一个（真正多段）时保留
-+                    $("li").each(function () {
-+                        const $kids = $(this).children();
-+                        const $ps = $kids.filter("p");
-+                        if ($kids.length === $ps.length && $ps.length > 1) return;
-+                        $ps.each(function () {
-+                            $(this).contents().unwrap();
-+                        });
-+                    });
-+                    html = $.html();
-+                }
-             }
-             const code = (isHtml && htmlMode === 'hast') ? html + "\nexport const Content = MDXContent" : `
- import { createComponent, render, renderJSX, renderComponent, unescapeHTML } from "astro/runtime/server/index.js";
-diff --git a/dist/lib/vite.js b/dist/lib/vite.js
-index 5dce0b0..5b81bc9 100644
---- a/dist/lib/vite.js
-+++ b/dist/lib/vite.js
-@@ -7,6 +7,190 @@ import logger from "./logger.js";
- import path from "node:path/posix";
- import { getAstroConfig } from "./store.js";
- import { load } from "cheerio";
 +import { createRenderer } from "astro-expressive-code";
 +import { toHtml } from "@expressive-code/core/hast";
 +import { definePlugin } from "@expressive-code/core";
 +import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 +import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
++import { readFileSync } from "node:fs";
++
++// —— 与 md 对齐：行首 `>` 引用语法 ——
++// Typst 不识别行首 `>`（会当普通文本原样输出），这里在编译前把引用行的 `>` 替换为
++// PUA 私有区标记，让 HTML 后处理能精确识别并转为 <blockquote>。连续引用行并段、
++// 空行分段、多段并入同一块等语义与 md 完全一致。
++const QUOTE_TOKEN = "\u{E000}\u{E001}";
++
++// 源码级预处理：标记行首（允许前导空白）的 `>` / `> ` 为引用行。
++// 跳过块级数学（单独成行的 $）与 raw 块（```）内部，避免误伤 `>` 运算符。
++function preprocessTypstQuote(source) {
++    const lines = source.split("\n");
++    const out = [];
++    let inMath = false;
++    let inRaw = false;
++    for (const line of lines) {
++        const trimmed = line.trim();
++        if (trimmed === "$") {
++            inMath = !inMath;
++            out.push(line);
++            continue;
++        }
++        if (trimmed.startsWith("```")) {
++            inRaw = !inRaw;
++            out.push(line);
++            continue;
++        }
++        if (inMath || inRaw) {
++            out.push(line);
++            continue;
++        }
++        out.push(line.replace(/^(\s*)>\s?/, `$1${QUOTE_TOKEN}`));
++    }
++    return out.join("\n");
++}
++
++// —— 与 md 对齐：`::github{repo="owner/repo"}` 动态卡片 ——
++// 输出结构与 md 的 rehype-component-github-card 完全一致（补丁无法 import 项目 src，内联于此）
++let githubCardCounter = 0;
++function renderGithubCard(repo) {
++    const cardUuid = `GC${(++githubCardCounter).toString(36)}`;
++    return `<a id="${cardUuid}-card" class="card-github fetch-waiting no-styling" href="https://github.com/${repo}" target="_blank" repo="${repo}">
++  <div class="gc-titlebar">
++    <div class="gc-titlebar-left">
++      <div class="gc-owner">
++        <div id="${cardUuid}-avatar" class="gc-avatar"></div>
++        <div class="gc-user">${repo.split("/")[0]}</div>
++      </div>
++      <div class="gc-divider">/</div>
++      <div class="gc-repo">${repo.split("/")[1]}</div>
++    </div>
++    <div class="github-logo"></div>
++  </div>
++  <div id="${cardUuid}-description" class="gc-description">Waiting for api.github.com...</div>
++  <div class="gc-infobar">
++    <div id="${cardUuid}-stars" class="gc-stars">00K</div>
++    <div id="${cardUuid}-forks" class="gc-forks">0K</div>
++    <div id="${cardUuid}-license" class="gc-license">0K</div>
++    <span id="${cardUuid}-language" class="gc-language">Waiting...</span>
++  </div>
++  <script id="${cardUuid}-script" type="text/javascript" defer>
++    fetch('https://api.github.com/repos/${repo}', { referrerPolicy: "no-referrer" }).then(response => response.json()).then(data => {
++      document.getElementById('${cardUuid}-description').innerText = data.description?.replace(/:[a-zA-Z0-9_]+:/g, '') || "Description not set";
++      document.getElementById('${cardUuid}-language').innerText = data.language;
++      document.getElementById('${cardUuid}-forks').innerText = Intl.NumberFormat('en-us', { notation: "compact", maximumFractionDigits: 1 }).format(data.forks).replaceAll("\\u202f", '');
++      document.getElementById('${cardUuid}-stars').innerText = Intl.NumberFormat('en-us', { notation: "compact", maximumFractionDigits: 1 }).format(data.stargazers_count).replaceAll("\\u202f", '');
++      const avatarEl = document.getElementById('${cardUuid}-avatar');
++      avatarEl.style.backgroundImage = 'url(' + data.owner.avatar_url + ')';
++      avatarEl.style.backgroundColor = 'transparent';
++      document.getElementById('${cardUuid}-license').innerText = data.license?.spdx_id || "no-license";
++      document.getElementById('${cardUuid}-card').classList.remove("fetch-waiting");
++      console.log("[GITHUB-CARD] Loaded card for ${repo} | ${cardUuid}.")
++    }).catch(err => {
++      const c = document.getElementById('${cardUuid}-card');
++      c?.classList.add("fetch-error");
++      console.warn("[GITHUB-CARD] (Error) Loading card for ${repo} | ${cardUuid}.")
++    })
++  </script>
++</a>`;
++}
 +
 +// —— 与 md 代码块效果统一：expressive-code 程序化渲染 ——
 +// 项目自定义插件（语言徽章、复制按钮）内联于此（补丁位于 node_modules，无法直接 import 项目 src）
@@ -255,12 +296,85 @@ index 5dce0b0..5b81bc9 100644
  function isTypstFile(id) {
      return /\.typ(\?(html|svg|html&body|body&html|html-text|html-hast))?$/.test(id);
  }
-@@ -141,7 +325,30 @@ export default function (config) {
-                             $(this).contents().unwrap();
-                         });
-                     });
--                    html = $.html();
-+                    // (c) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
+@@ -79,8 +344,14 @@ export default function (config) {
+             if (opts.includes('html-text')
+                 || opts.includes('htxt'))
+                 htmlMode = 'text';
++            // 引用语法预处理：仅 text 模式（项目实际用法）启用——hast 模式不走下文的
++            // cheerio 后处理，埋入的标记会残留，故跳过。
++            // 传 mainFileContent 时不能同时带 mainFilePath（typst-ts 编译会报冲突）
++            const typstSource = htmlMode === 'text'
++                ? { mainFileContent: preprocessTypstQuote(readFileSync(mainFilePath, "utf-8")) }
++                : { mainFilePath };
+             let { html, getFrontmatter } = await renderToHTMLish({
+-                mainFilePath,
++                ...typstSource,
+                 // TODO: remove body; autodetect after the render process is delayed
+                 body: htmlMode === 'hast' ? "hast" : true,
+             }, config.options, isHtml);
+@@ -121,6 +392,89 @@ export default function (config) {
+                     }
+                     html = await rehypeTypstx(html, astroConfig.markdown?.rehypePlugins ?? []);
+                 }
++                else if (htmlMode === 'text') {
++                    // —— 与 .md 格式统一后处理 ——
++                    const $ = load(html);
++                    // (a) 标题降级：typst 的 `=` 渲染为 <h2>，整体降一级与 md 的 `#` 对齐
++                    for (const [sel, tag] of [["h2", "h1"], ["h3", "h2"], ["h4", "h3"], ["h5", "h4"], ["h6", "h5"]]) {
++                        $(sel).each(function () {
++                            $(this).replaceWith(`<${tag}>${$(this).html()}</${tag}>`);
++                        });
++                    }
++                    // (b) 引用块：识别 preprocess 埋入标记的段落，去掉标记并合并为 <blockquote>
++                    //      （连续引用段落并入同一块，与 md 的 `>` 引用语义一致）。
++                    //      注意必须在松列表解包之前执行：解包会把 li 内多段 <p>（含引用段）
++                    //      解成裸文本，届时无法再按 <p> 识别引用
++                    const quoteSet = new Set();
++                    $("p").each(function () {
++                        if ($(this).text().startsWith(QUOTE_TOKEN)) quoteSet.add(this);
++                    });
++                    if (quoteSet.size > 0) {
++                        // 移除全部标记
++                        $.root().find("*").addBack().contents().each(function () {
++                            if (this.type === "text") {
++                                this.data = this.data.replaceAll(QUOTE_TOKEN, "");
++                            }
++                        });
++                        // 相邻引用段落合并为一个 blockquote
++                        const handled = new Set();
++                        $("p").each(function () {
++                            if (!quoteSet.has(this) || handled.has(this)) return;
++                            const group = [this];
++                            let next = $(this).next();
++                            while (next.length && next.is("p") && quoteSet.has(next[0])) {
++                                group.push(next[0]);
++                                next = next.next();
++                            }
++                            for (const p of group) handled.add(p);
++                            const $blockquote = $("<blockquote></blockquote>");
++                            $(group[0]).before($blockquote);
++                            for (const p of group) $blockquote.append($(p));
++                        });
++                    }
++                    // (b2) GitHub 卡片：识别 `::github{repo="..."}` 文本段并替换为动态卡片
++                    //      （Typst 会把这一行当作普通文本原样输出，此处直接匹配替换，
++                    //        输出结构与 md 的 rehype-component-github-card 一致）
++                    $("p").each(function () {
++                        const m = $(this).text().match(/^:{2,3}github\{repo=["“”]([^"“”]+)["“”]\}$/);
++                        if (!m) return;
++                        $(this).replaceWith(renderGithubCard(m[1]));
++                    });
++                    // (c) 松列表解包：typst 的 li 内容包在 <p> 里（结构包裹），
++                    //     解开这些 <p> 让 li 内直接为文本；li 内全是 <p> 且不止一个（真正多段）时保留
++                    $("li").each(function () {
++                        const $kids = $(this).children();
++                        const $ps = $kids.filter("p");
++                        if ($kids.length === $ps.length && $ps.length > 1) return;
++                        $ps.each(function () {
++                            $(this).contents().unwrap();
++                        });
++                    });
++                    // (d) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
 +                    const $pres = $("pre");
 +                    if ($pres.length > 0) {
 +                        const renderer = await getRenderer();
@@ -284,6 +398,7 @@ index 5dce0b0..5b81bc9 100644
 +                        }
 +                    }
 +                    html = $("body").html();
-                 }
++                }
              }
              const code = (isHtml && htmlMode === 'hast') ? html + "\nexport const Content = MDXContent" : `
+ import { createComponent, render, renderJSX, renderComponent, unescapeHTML } from "astro/runtime/server/index.js";
