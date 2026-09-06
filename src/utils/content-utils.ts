@@ -212,8 +212,12 @@ export async function getTagList(): Promise<Tag[]> {
 		});
 	});
 
-	// sort tags
+	// sort tags：按使用次数降序，次数相同再按字母升序
 	const keys: string[] = Object.keys(countMap).sort((a, b) => {
+		const countDiff = countMap[b] - countMap[a];
+		if (countDiff !== 0) {
+			return countDiff;
+		}
 		return a.toLowerCase().localeCompare(b.toLowerCase());
 	});
 
