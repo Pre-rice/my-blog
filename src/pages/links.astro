@@ -2,6 +2,7 @@
 import { getEntry } from "astro:content";
 import Markdown from "@components/misc/Markdown.astro";
 import Comments from "@components/widget/Comments.svelte";
+import { Icon } from "astro-icon/components";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
 const linksPost = await getEntry("spec", "links");
@@ -26,7 +27,19 @@ const friends = linksPost.data.friends;
                 {
                     friends.map((item) => (
                         <div class="friend-card flex flex-nowrap items-stretch h-28 gap-4 rounded-[var(--radius-large)]">
-                            <div class="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-900">
+                            <a
+                                href={item.siteurl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`访问 ${item.title}`}
+                                class="group block relative w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-900 active:scale-95 transition"
+                            >
+                                <div class="absolute transition pointer-events-none group-hover:bg-black/30 group-active:bg-black/50 w-full h-full z-50 flex items-center justify-center">
+                                    <Icon
+                                        name="fa6-solid:arrow-up-right-from-square"
+                                        class="transition opacity-0 scale-90 group-hover:scale-100 group-hover:opacity-100 text-white text-4xl"
+                                    />
+                                </div>
                                 {item.imgurl.startsWith("http") ? (
                                     <img
                                         src={item.imgurl}
@@ -38,11 +51,24 @@ const friends = linksPost.data.friends;
                                         {item.imgurl}
                                     </div>
                                 )}
-                            </div>
+                            </a>
                             <div class="grow w-full">
-                                <div class="font-bold transition text-lg text-neutral-900 dark:text-neutral-100 mb-1">
+                                <a
+                                    href={item.siteurl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="group block font-bold transition text-lg text-neutral-900 dark:text-neutral-100 mb-1 hover:text-[var(--primary)] dark:hover:text-[var(--primary)] active:text-[var(--title-active)] dark:active:text-[var(--title-active)]"
+                                >
                                     {item.title}
-                                </div>
+                                    <Icon
+                                        class="inline text-2xl text-[var(--primary)] md:hidden absolute translate-y-0.5 transition opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
+                                        name="material-symbols:chevron-right-rounded"
+                                    />
+                                    <Icon
+                                        class="hidden md:inline absolute text-2xl text-[var(--primary)] transition translate-y-0.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0"
+                                        name="material-symbols:chevron-right-rounded"
+                                    />
+                                </a>
                                 <div class="text-50 text-sm font-medium">
                                     {item.desc}
                                 </div>

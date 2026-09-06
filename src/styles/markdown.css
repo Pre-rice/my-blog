@@ -33,6 +33,8 @@
             /* 背景块高度：上下 0.15em / 左右 0.2em，可按需微调 */
             padding: 0.15em 0.2em;
             margin: -0.15em -0.2em;
+            /* hover 背景框圆角，可按需调整 */
+            border-radius: 0.1em;
         }
     }
 
