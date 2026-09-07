@@ -1,10 +1,10 @@
 #metadata((
   title: "泊松分布",
-  published: "2026-08-01-2",
+  published: "2026-10-01",
   description: "一个小切口，牵连出无数宝藏！紧密联系的体系。",
   tags: ("数学","概率"),
   category: "数学研究",
-  draft: false,
+  draft: true,
 ))<frontmatter>
 
 #html.elem("p", attrs: (style: "margin-top: 2em;")) 
