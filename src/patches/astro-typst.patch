@@ -1,5 +1,5 @@
 diff --git a/dist/lib/integration.js b/dist/lib/integration.js
-index 9ad53809f2bffb1e0d2b74f32f2a0c4376dfbe7e..591a2c01d64a747d0cd0cc4b3925fea680eb45a1 100644
+index 9ad53809f2bffb1e0d2b74f32f2a0c4376dfbe7e..be3cef25bad700958118d3e6beb1862b8852f161 100644
 --- a/dist/lib/integration.js
 +++ b/dist/lib/integration.js
 @@ -1,5 +1,4 @@
@@ -21,10 +21,16 @@ index 9ad53809f2bffb1e0d2b74f32f2a0c4376dfbe7e..591a2c01d64a747d0cd0cc4b3925fea6
                  });
              },
 diff --git a/dist/lib/vite.js b/dist/lib/vite.js
-index 3a9a8f6..b7ef193 100644
+index c925840efe1dc5afe7f747c63413fb80aa56b8e1..3af48085fc184133d3a3e9b217e4f16049f90bf9 100644
 --- a/dist/lib/vite.js
 +++ b/dist/lib/vite.js
-@@ -6,6 +6,271 @@ import { rehypeTypstx } from "./rehype.js";
+@@ -1,11 +1,280 @@
+ import {} from "vite";
+-import { renderToHTMLish } from "./typst.js";
++import { getOrInitCompiler, renderToHTMLish } from "./typst.js";
+ import { pathToFileURL } from "node:url";
+ import { detectTarget } from "./prelude.js";
+ import { rehypeTypstx } from "./rehype.js";
  import logger from "./logger.js";
  import path from "node:path/posix";
  import { getAstroConfig } from "./store.js";
@@ -65,7 +71,11 @@ index 3a9a8f6..b7ef193 100644
 +            out.push(line);
 +            continue;
 +        }
-+        out.push(line.replace(/^(\s*)>\s?/, `$1${QUOTE_TOKEN}`));
++        out.push(line.replace(/^(\s*)>\s?/, (match, indent) => {
++            // 空引用行（`>` 后无内容）：md 中作引用块内段落分隔，
++            // 需转成真正空行让 Typst 分段，否则会被并入上一引用段落
++            return line.slice(match.length).trim() === "" ? "" : indent + QUOTE_TOKEN;
++        }));
 +    }
 +    return out.join("\n");
 +}
@@ -296,15 +306,23 @@ index 3a9a8f6..b7ef193 100644
  function isTypstFile(id) {
      return /\.typ(\?(html|svg|html&body|body&html|html-text|html-hast))?$/.test(id);
  }
-@@ -79,8 +344,14 @@ export default function (config) {
+@@ -79,8 +348,22 @@ export default function (config) {
              if (opts.includes('html-text')
                  || opts.includes('htxt'))
                  htmlMode = 'text';
 +            // 引用语法预处理：仅 text 模式（项目实际用法）启用——hast 模式不走下文的
 +            // cheerio 后处理，埋入的标记会残留，故跳过。
-+            // 传 mainFileContent 时不能同时带 mainFilePath（typst-ts 编译会报冲突）
++            // 不能直接传 mainFileContent 编译：那会把主文件虚拟到项目根的 __main__.typ，
++            // image() 的相对路径随之按项目根解析，与 content sync（按真实 .typ 路径、以文章
++            // 所在目录为基准）不一致，带图的 .typ 在 sync 与渲染两个阶段必有一端读不到图。
++            // 因此这里把预处理结果 mapShadow 到真实 mainFilePath，路径语义不变（仍按文章
++            // 所在目录解析 image()），再按 mainFilePath 编译，两个阶段图片基准即统一。
 +            const typstSource = htmlMode === 'text'
-+                ? { mainFileContent: preprocessTypstQuote(readFileSync(mainFilePath, "utf-8")) }
++                ? (() => {
++                    const preprocessed = preprocessTypstQuote(readFileSync(mainFilePath, "utf-8"));
++                    getOrInitCompiler().mapShadow(mainFilePath, Buffer.from(preprocessed, "utf-8"));
++                    return { mainFilePath };
++                })()
 +                : { mainFilePath };
              let { html, getFrontmatter } = await renderToHTMLish({
 -                mainFilePath,
@@ -312,7 +330,7 @@ index 3a9a8f6..b7ef193 100644
                  // TODO: remove body; autodetect after the render process is delayed
                  body: htmlMode === 'hast' ? "hast" : true,
              }, config.options, isHtml);
-@@ -121,6 +392,89 @@ export default function (config) {
+@@ -121,6 +404,89 @@ export default function (config) {
                      }
                      html = await rehypeTypstx(html, astroConfig.markdown?.rehypePlugins ?? []);
                  }

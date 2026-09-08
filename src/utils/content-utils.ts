@@ -251,7 +251,12 @@ export async function getCategoryList(): Promise<Category[]> {
 		count[categoryName] = count[categoryName] ? count[categoryName] + 1 : 1;
 	});
 
+	// 按文章数目降序，数目相同再按字母升序（与 getTagList 一致）
 	const lst = Object.keys(count).sort((a, b) => {
+		const countDiff = count[b] - count[a];
+		if (countDiff !== 0) {
+			return countDiff;
+		}
 		return a.toLowerCase().localeCompare(b.toLowerCase());
 	});
 

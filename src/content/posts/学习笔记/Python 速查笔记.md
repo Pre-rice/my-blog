@@ -2,14 +2,14 @@
 title: Python 速查笔记
 published: 2026-07-31-1
 description: 基于我自身理解整理的 Python 重点语法
-tags: [Python]
+tags: [编程, Python]
 category: 学习笔记
 draft: false
 ---
 
-<p style="margin-top: 1em;"></p>
+<p style="margin-top: -1em;"></p>
 
-# 0 Python的异常处理
+## Python的异常处理
 
 ```python
 try:
@@ -22,13 +22,13 @@ finally:
     # 无论是否发生异常，都会在离开try块之前执行的代码块(即使try中包含return、break或continue)
 ```
 
-# 1 Python的基础: 类与对象
+## Python的基础: 类与对象
 
 Python中一切皆对象  
 类(`class`)是创建实例(`instance`)的模板，对象(`object`)就是类的实例  
 面向对象编程(`OOP`)把对象作为程序的基本单元  
 
-## 1.1 类基础
+### 类基础
 
 类定义体仅在类定义时执行一次，其中可定义属性(`property`)和方法(`method`)  
 
@@ -46,7 +46,7 @@ Python中一切皆对象
 - `__init__`方法为特殊的实例方法，会在创建实例时传入除`self`外的参数并自动调用一次，用于初始化实例属性等  
 - 使用`@property`装饰器可将实例方法定义为只读的实例属性，使用`@property_name.setter`装饰器可定义对应属性的写入方法  
 
-## 1.2 变量与对象
+### 变量与对象
 
 Python中的数据类型、函数、类、模块等都是对象，都拥有自己的属性和方法  
 对象的三大特性: **身份(`id`) 类型(`type`) 值(`value`)**  
@@ -55,7 +55,7 @@ Python中的变量是对对象的引用(`reference`)
 可变对象的修改会影响所有引用该对象的变量  
 不可变对象的修改会创建新对象，不影响原对象  
 
-## 1.3 数据类型: 存储数据的对象
+### 数据类型: 存储数据的对象
 
 数据类型分为**简单数据类型**(`int` `float` `complex` `bool` `NoneType`)与**组合数据类型**(`list` `tuple` `set` `dict` `str`)  
 简单数据类型均不可变，组合数据类型含**可变类型**(`list` `set` `dict` `bytearray`)与**不可变类型**(`tuple` `frozenset` `str` `bytes`)  
@@ -63,7 +63,7 @@ Python中的变量是对对象的引用(`reference`)
 
 - `str()`函数会调用对象的`__str__`方法返回一个用户友好的字符串，`repr()`函数会调用对象的`__repr__`方法返回一个开发者友好的字符串，`eval()`函数会将字符串解析为表达式并返回其值(往往能还原`repr()`函数的输出)  
 
-## 1.4 简单函数
+### 简单函数
 
 - **输入输出函数**  
   `input(prompt=None)` 返回`str`类型  
@@ -74,18 +74,18 @@ Python中的变量是对对象的引用(`reference`)
 - **lambda函数**  
   `lambda arguments: expression`   表示一个参数为`arguments`，返回值为`expression`的匿名函数  
 
-# 2 Python的核心数据结构: 可迭代对象
+## Python的核心数据结构: 可迭代对象
 
 Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python的核心概念之一  
 
-## 2.1 可迭代对象的分类
+### 可迭代对象的分类
 
 - **序列**(`sequence`): `list` `tuple` `str` `bytes` `bytearray` `range`  
 - **集合**(`set`): `set` `frozenset`  
 - **映射**(`mapping`): `dict`  
 - **迭代器**(`iterator`): 生成器(`generator`) 文件对象(`file object`) `enumerate` `zip` `map` `filter`  
 
-## 2.2 可迭代对象的共同函数
+### 可迭代对象的共同函数
 
 - `iter(iterable)` 调用`__iter__`方法返回迭代器对象  
 - `next(iterator[, default])` 返回迭代器的下一个元素  
@@ -110,7 +110,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
 - `filter(function, iterable)` 返回过滤后的迭代器  
 - `reduce(function, iterable[, initializer])` 累积计算可迭代对象的元素，需导入`functools`模块  
 
-## 2.3 序列(sequence)
+### 序列(sequence)
 
 - **序列反转** `reversed(seq)` 返回反转序列后的迭代器  
 - **序列索引** `seq[index]` 返回指定索引的元素 支持负索引  
@@ -130,7 +130,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
 - **range对象**是一类特殊的不可变序列，惰性求值但可重复使用，支持反转、索引与切片  
   `range(stop)` `range(start, stop)` `range(start, stop, step)` 皆可创建`range`对象  
 
-## 2.4 可变容器对象(list set dict)
+### 可变容器对象(list set dict)
 
 | 操作 | `list` | `set` | `dict` |
 |------|--------|-------|--------|
@@ -145,7 +145,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
 - 浅拷贝仅拷贝引用，不拷贝内容；序列切片也是浅拷贝；`copy`模块的`copy()`和`deepcopy()`函数可实现浅拷贝和深拷贝(深拷贝会创建可变元素的副本)  
 - **list的独有方法**: `list.sort(key=None, reverse=False)`，`list.reverse()`  
 
-## 2.5 集合(set) `{elem, ...}`
+### 集合(set) `{elem, ...}`
 
 集合中的元素必须是不可变数据对象，且不可重复  
 定义空集合不能直接用`{}`(这表示空字典)，需要使用`set()`  
@@ -165,7 +165,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
   - `set.discard(elem)` 移除指定元素(不存在不报错)  
   - `set.pop()` 随机移除并返回一个元素  
 
-## 2.6 字典(dict) `{key: value, ...}`
+### 字典(dict) `{key: value, ...}`
 
 字典的键可以是任意不可变数据对象，值可以是任意数据对象  
 字典作为可迭代对象时，默认迭代的是`key`  
@@ -182,7 +182,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
 - **字典的更新**: `dict[key] = value`、`dict.update(other)`  
   - `dict.setdefault(key, default=None)` key不存在则添加`key: default`，否则返回对应value  
 
-## 2.7 推导式与生成器
+### 推导式与生成器
 
 - **列表推导式**   `[expression for item in iterable if condition]`  
 - **字典推导式**   `{key_expression: value_expression for item in iterable if condition}`  
@@ -193,9 +193,9 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
 
 生成器函数也可返回生成器对象，生成器函数包含的每个`yield`表达式都会暂停函数执行并返回一个元素  
 
-## 2.8 字符串
+### 字符串
 
-### 2.8.1 字符串方法
+#### 字符串方法
 
 - **分割与连接**  
   - `split(sep=None, maxsplit=-1)` 从左往右查找分隔符`sep`(至多查找`maxsplit`次)，返回分割后字符串组成的列表  
@@ -219,7 +219,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
   - `zfill(width)` 在数字字符串左侧填充0至宽度`width`(以符号开头则会在符号后填充)  
   - `strip([chars])`、`lstrip([chars])`、`rstrip([chars])` 返回将字符串两端/左端/右端的指定字符删除后的新字符串，`chars`指定要删除的字符集合，默认为空白字符  
 
-### 2.8.2 字符串格式化: f-string
+#### 字符串格式化: f-string
 
 在字符串前加`f`或`F`，即可在字符串内嵌入`{expression[!conversion][:format_spec]}`  
 这表示计算表达式`expression`的值，调用`conversion`指定函数转换为字符串，再按照格式说明符`format_spec`进行格式化  
@@ -233,7 +233,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
   - `.precision`: 精度 `f`/`F`浮点数的小数位数、`g`/`G`浮点数的有效位数、`s`字符串的宽度  
   - `type`: 类型 `s`字符串(默认)、`d`十进制整数、`e`/`E`科学计数、`f`/`F`定点数、`g`/`G`自动选`f`/`e`、`%`百分数  
 
-### 2.8.3 字符串匹配: 正则表达式(regular expression)
+#### 字符串匹配: 正则表达式(regular expression)
 
 - **正则表达式的构成**  
   - **元字符**: `. ^ $ * + ? { } [ ] \ | ( )` 若要匹配这些字符本身，需要在前面加上转义字符`\`  
@@ -273,7 +273,7 @@ Python中的组合数据类型均为可迭代对象(`iterable`)，这是Python�
   - `start()`、`end()`、`span()` 传入一个分组的编号或名称，返回其在字符串中的起始索引/结束索引/起始和结束索引的元组  
   - `match_object[]` 等价于`match_object.group()`，即可以在`[]`中使用编号或名称直接访问分组匹配的字符串  
 
-## 2.9 文件对象与目录操作
+### 文件对象与目录操作
 
 - **文件的打开和关闭**  
   - `open(file, mode='r', buffering=-1, encoding=None, ...)` 返回文件对象  

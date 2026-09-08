@@ -19,6 +19,31 @@ const { class: className, headingSlugs } = Astro.props;
 
 <style>
   /* 公式现在是 MathML（typst 0.15 原生导出），颜色继承正文 CSS，无需额外覆盖 */
+
+  /* typst 多行对齐公式（`&`）对齐修复：
+     浏览器 MathML 默认把每个单元格内容按自身宽度居中排布，导致各行的对齐点（如第一个 `=`）
+     被甩到不同列；且单元格自带左右 padding，会让对齐符（`=`）之前出现一段异常空隙。
+     这里强制单元格内容左对齐并清零 padding，让 `&` 对齐列贴同一竖线、等号前间距恢复正常。
+     仅命中 typst 生成的 .multiline-equation.aligned 表第一层单元格（不深入其内部嵌套的矩阵表），
+     KaTeX 输出不含此结构，md 公式不受影响 */
+  :global(.typst-content mtable.multiline-equation.aligned > mtr > mtd) {
+    text-align: left;
+    padding: 0;
+  }
+
+  /* typst 内联示意图（#image）为浅色设计：png 白底黑线、svg 黑字。深色模式下
+     invert 反色后（白→黑、黑→白），再用 screen 混合让图底融入背景。
+     注意：正文容器带 onload-animation（transform 动画 fill-forwards）会形成合成层
+     隔离，img 的 screen 混合若没有同色底可依，只能与透明混合，反色后的黑底会
+     原样糊成一团——故给 .typst-content 补上与卡片一致的 --card-bg 底（同色，视觉
+     无变化）。svg 无底色，不受 screen 影响；浅色模式保持原图。 */
+  :global(html.dark .typst-content) {
+    background: var(--card-bg);
+  }
+  :global(html.dark .typst-content img[src^="data:image/"]) {
+    filter: invert(1) hue-rotate(180deg);
+    mix-blend-mode: screen;
+  }
 </style>
 
 <script>

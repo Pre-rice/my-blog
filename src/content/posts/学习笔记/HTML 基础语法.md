@@ -2,7 +2,7 @@
 title: HTML 基础语法
 published: 2026-07-31-2
 description: AI 整理的 HTML 基础语法
-tags: [HTML]
+tags: [编程, HTML]
 category: 学习笔记
 draft: false
 ---
