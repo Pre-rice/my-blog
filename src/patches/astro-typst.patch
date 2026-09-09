@@ -330,7 +330,7 @@ index c925840efe1dc5afe7f747c63413fb80aa56b8e1..3af48085fc184133d3a3e9b217e4f160
                  // TODO: remove body; autodetect after the render process is delayed
                  body: htmlMode === 'hast' ? "hast" : true,
              }, config.options, isHtml);
-@@ -121,6 +404,89 @@ export default function (config) {
+@@ -121,6 +404,121 @@ export default function (config) {
                      }
                      html = await rehypeTypstx(html, astroConfig.markdown?.rehypePlugins ?? []);
                  }
@@ -424,7 +424,7 @@ index c925840efe1dc5afe7f747c63413fb80aa56b8e1..3af48085fc184133d3a3e9b217e4f160
 +                         }
 +                     }
 +                     
-// (d) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
++                    // (d) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
 +                    const $pres = $("pre");
 +                    if ($pres.length > 0) {
 +                        const renderer = await getRenderer();
