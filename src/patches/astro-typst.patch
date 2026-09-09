@@ -392,7 +392,39 @@ index c925840efe1dc5afe7f747c63413fb80aa56b8e1..3af48085fc184133d3a3e9b217e4f160
 +                            $(this).contents().unwrap();
 +                        });
 +                    });
-+                    // (d) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
++                     // + (c2) MathML accent 重写（根治 Chromium 把 `<mover>` accent 压贴基字的问题）：
++                     //      Chromium 对 MathML 内部元素不接受 transform/position 等 CSS，无法用样式拉开
++                     //      accent 与基字的间距，因此把每个 `<mover>` 改写为“内层 <math>（基字，保留数学
++                     //      渲染与字体）+ 绝对定位 overlay（accent）”的 HTML 结构，由 CSS 精确控制 accent
++                     //      的垂直间隙与水平居中。宽基字 + macron/overline 时 overlay 退化为拉满宽度的横线。
++                     if ($('mover').length > 0) {
++                         $('body').prepend('<style>.tk-ac{position:relative;display:inline-block;line-height:0;}.tk-ac>.tk-b{display:inline-block;line-height:0;}.tk-m{position:absolute;left:50%;transform:translateX(-50%);bottom:100%;line-height:1;font-size:.82em;white-space:nowrap;margin-bottom:-0.62em;color:inherit;}.tk-m.tk-line{left:0;right:0;transform:none;line-height:0;margin-bottom:.12em;border-top:.07em solid currentColor;}</style>');
++                         while ($('mover').length > 0) {
++                             $('mover').each(function () {
++                                 const $mv = $(this);
++                                 if ($mv.find('mover').length > 0) return;   // 留待外层处理完嵌套后一并处理
++                                 const $base = $mv.children().first();
++                                 if (!$base.length) { $mv.replaceWith(''); return; }
++                                 let ch = $mv.children().eq(1).text() || '';
++                                 const COMB = {'\u0300':'`','\u0301':'\u00B4','\u0302':'\u02C6','\u0303':'\u02DC','\u0304':'\u00AF','\u0305':'\u203E','\u0306':'\u02D8','\u0307':'\u02D9','\u0308':'\u00A8','\u030A':'\u02DA','\u030B':'\u02DD','\u030C':'\u02C7'};
++                                 if (COMB[ch]) ch = COMB[ch];
++                                 const isMacron = ch === '\u00AF' || ch === '\u203E';
++                                 const tagB = ($base[0] && $base[0].tagName || '').toLowerCase();
++                                 const wideBase = !(tagB === 'mi' || tagB === 'mn' || tagB === 'mo');
++                                 const $wrap = $("<span class='tk-ac'></span>");
++                                 const $math = $("<math class='tk-b'></math>").append($base.clone());
++                                 $wrap.append($math);
++                                 if (isMacron) {
++                                     $wrap.append("<span class='tk-m tk-line'></span>");
++                                 } else {
++                                     $wrap.append($("<span class='tk-m'></span>").text(ch));
++                                 }
++                                 $mv.replaceWith($wrap);
++                             });
++                         }
++                     }
++                     
+// (d) 代码块 EC 化：与 md 的 expressive-code 渲染完全一致
 +                    const $pres = $("pre");
 +                    if ($pres.length > 0) {
 +                        const renderer = await getRenderer();

@@ -18,7 +18,7 @@ friends:
     siteurl: https://ohimt.novic.cc/
   - title: Deebm
     imgurl: https://blog.deebm.top/favicon/favicon.jpg?v=2
-    desc: "欢迎来到我的博客。我想在这里留下一些值得记住的东西：学习时的发现、遇到问题后的思考，以及生活里偶尔冒出来的想法。"
+    desc: "Live young and wild and free."
     siteurl: https://blog.deebm.top/
   - title: 鬼迷宫
     imgurl: "https://ghostmaze.novic.cc/favicon.svg"
