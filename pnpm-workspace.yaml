@@ -1,0 +1,7 @@
+# pnpm 从 9.x 起不再读取 package.json 的 "pnpm" 字段，设置统一迁移至此文件。
+# 原先写在 package.json → pnpm.patchedDependencies，pnpm 会打 WARN 并忽略它。
+packages:
+  - "."
+
+patchedDependencies:
+  astro-typst: src/patches/astro-typst.patch

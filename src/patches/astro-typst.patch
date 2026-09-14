@@ -383,11 +383,11 @@ index c925840efe1dc5afe7f747c63413fb80aa56b8e1..3af48085fc184133d3a3e9b217e4f160
 +                        $(this).replaceWith(renderGithubCard(m[1]));
 +                    });
 +                    // (c) 松列表解包：typst 的 li 内容包在 <p> 里（结构包裹），
-+                    //     解开这些 <p> 让 li 内直接为文本；li 内全是 <p> 且不止一个（真正多段）时保留
++                    //     解开这些 <p> 让 li 内直接为文本；li 内不止一个 <p>（真正多段）时保留。
++                    //     判据只看 <p> 个数：含子列表的 li，原判据「子元素全是 <p>」不成立会误剥
 +                    $("li").each(function () {
-+                        const $kids = $(this).children();
-+                        const $ps = $kids.filter("p");
-+                        if ($kids.length === $ps.length && $ps.length > 1) return;
++                        const $ps = $(this).children().filter("p");
++                        if ($ps.length > 1) return;
 +                        $ps.each(function () {
 +                            $(this).contents().unwrap();
 +                        });
