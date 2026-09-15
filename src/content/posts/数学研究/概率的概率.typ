@@ -4,7 +4,7 @@
   description: "当概率本身成为随机变量，概率的概率该如何去衡量？",
   tags: ("数学","概率","贝叶斯推断"),
   category: "数学研究",
-  draft: false,
+  draft: true,
 ))<frontmatter>
 
 #html.elem("p", attrs: (style: "margin-top: 2em;")) 
