@@ -7,8 +7,6 @@
   draft: false,
 ))<frontmatter>
 
-#html.elem("p", attrs: (style: "margin-top: -1em;")) 
-
 == 定义
 
 *关系*（relation）：设集合 $A$ 和 $B$，$A×B$（直积）的任意一个子集 $R$ 都称为从 $A$ *到* $B$ 的一个（二元）关系。集合 $A$ 到自身的关系，称为集合 $A$ *上*的（二元）关系。

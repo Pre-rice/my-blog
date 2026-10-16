@@ -131,10 +131,55 @@
 
     }
 
+    /* 浏览器渲染 MathML 时强制使用通用族 math（Windows 落到 Cambria Math）：括号与运算符周围
+       留白过大、字距松散，与 Typst 预览的 Computer Modern 观感差距明显。这里改用 KaTeX 的数学字体
+       （同为 Computer Modern 风格，@font-face 由 Layout.astro 引入的 katex.css 提供） */
+    math {
+        font-family: "KaTeX_Main", "KaTeX_Math", "KaTeX_AMS", "KaTeX_Caligraphic", "KaTeX_Fraktur", "KaTeX_Script", serif;
+    }
+
     .katex-display-container {
         max-width: 100%;
         overflow-x: auto;
         margin: 1em 0;
     }
-    
+
+    /* typography 插件默认给表格 width:100%（撑满正文列宽）、单元格 text-align:start（左对齐）。
+       这里改为按内容宽度收缩并让单元格内容居中，贴近 typst #table(align: center) 的原生观感。
+       max-width 兜底：内容过宽时仍允许压回正文列宽，避免溢出卡片被裁切 */
+    table {
+        width: auto;
+        max-width: 100%;
+    }
+
+    /* 单元格左右留白：列间距等于它的两倍，表格两端各留一份，接近 typst column-gutter 的宽松观感。
+       同时覆盖 prose 把首列左、末列右内边距归零的规则（那是配合 width:100% 让表格两端与正文对齐用的，
+       表格收缩后只会让首列文字顶在横线左端） */
+    th, td {
+        text-align: center;
+        padding-inline: 1em;
+    }
+
+    /* 正文首元素与文章头部（元信息/分割线）之间的间距微调。空 <p> 由 [...slug].astro 注入，
+       在正文里始终排第一位；下面按「正文第一个内容元素」的类型决定它是否占位、占多少：
+         二级标题开头 → 上移 1em（抵消标题自带的上边距）；文字（段落/列表/引用）开头 → 留出 2em；
+         其余（一级标题、代码块、表格等）→ 不占位。
+       注意两种文章的 DOM 不同：md 正文被 remark-sectionize 按 h2 切成 <section>，
+       typst 正文整体包在一个 <div> 里，所以首个内容元素要么是 .custom-md 的直接子元素
+       （md 里第一个 h2 之前的游离段落），要么在 section / div 内部 */
+    .post-top-spacing {
+        display: none;
+    }
+    /* 文字开头：有游离段落，或 section / div 内部首元素是文字 */
+    &:has(> :is(p, ul, ol, blockquote):not(.post-top-spacing)) > .post-top-spacing,
+    &:has(> :is(section, div):first-of-type > :is(p, ul, ol, blockquote):first-child) > .post-top-spacing {
+        display: block;
+        margin-top: 2em;
+    }
+    /* 二级标题开头：section / div 内部首元素是 h2，且 .custom-md 下没有游离段落 */
+    &:has(> :is(section, div):first-of-type > h2:first-child):not(
+            :has(> :is(p, ul, ol, blockquote):not(.post-top-spacing))) > .post-top-spacing {
+        display: block;
+        margin-top: -1em;
+    }
 }

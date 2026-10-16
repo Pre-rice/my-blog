@@ -13,8 +13,8 @@
  *
  * 生成后需提交 git，线上构建直接使用仓库里的文件。容错：生成失败时若已存在 playlist.json 则复用旧文件。
  */
-import { writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");

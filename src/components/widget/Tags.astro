@@ -1,4 +1,5 @@
 ---
+import type { MarkdownHeading } from "astro";
 
 import { getTagList } from "../../utils/content-utils";
 import { getTagUrl } from "../../utils/url-utils";
@@ -7,26 +8,73 @@ import WidgetLayout from "./WidgetLayout.astro";
 
 const tags = await getTagList();
 
-const COLLAPSED_HEIGHT = "7.5rem";
-
-const isCollapsed = tags.length >= 30;
+/** 有目录的页面（文章页）标签云最多显示的行数，超出的部分滚动查看。改这个数即可调整可见行数 */
+const MAX_VISIBLE_TAG_ROWS = 5;
+/** 单行标签高度（rem），对应 ButtonTag 的 h-8；行间距对应标签容器的 gap-2 */
+const TAG_ROW_HEIGHT_REM = 2;
+const TAG_ROW_GAP_REM = 0.5;
+const MAX_HEIGHT = `${MAX_VISIBLE_TAG_ROWS * TAG_ROW_HEIGHT_REM + (MAX_VISIBLE_TAG_ROWS - 1) * TAG_ROW_GAP_REM}rem`;
 
 interface Props {
 	class?: string;
 	style?: string;
+	headings?: MarkdownHeading[];
 }
+const { headings } = Astro.props;
 const className = Astro.props.class;
 const style = Astro.props.style;
+
+/** 有目录（文章页）→ 限高并显示滚动条；无目录页面（如主页）→ 完整展示 */
+const hasHeadings = (headings ?? []).length > 0;
 ---
-<WidgetLayout name="标签" id="tags" isCollapsed={isCollapsed} collapsedHeight={COLLAPSED_HEIGHT} class={className} style={style}>
-    <div class="flex gap-2 flex-wrap" data-tag-cloud>
-        {tags.map(t => (
-            <ButtonTag href={getTagUrl(t.name)} label={`View all posts with the ${t.name.trim()} tag`}>
-                {t.name.trim()}
-            </ButtonTag>
-        ))}
+<WidgetLayout name="标签" id="tags" class={className} style={style}>
+    <div
+        class:list={["tag-scroll", { "tag-scroll-limited": hasHeadings }]}
+        data-tag-scroll
+        data-max-height={MAX_HEIGHT}
+        style={hasHeadings ? `max-height: ${MAX_HEIGHT}` : undefined}
+    >
+        <div class="flex gap-2 flex-wrap" data-tag-cloud>
+            {tags.map(t => (
+                <ButtonTag href={getTagUrl(t.name)} label={`View all posts with the ${t.name.trim()} tag`}>
+                    {t.name.trim()}
+                </ButtonTag>
+            ))}
+        </div>
     </div>
 </WidgetLayout>
+
+<style>
+    /* 滚动条样式与音乐播放列表、分类卡片一致；限高由 frontmatter 的 MAX_VISIBLE_TAG_ROWS 决定 */
+    .tag-scroll {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .tag-scroll-limited {
+        padding-right: 6px;
+        scrollbar-width: thin;
+        scrollbar-color: color-mix(in srgb, var(--content-meta) 30%, transparent)
+            transparent;
+    }
+
+    .tag-scroll-limited::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .tag-scroll-limited::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .tag-scroll-limited::-webkit-scrollbar-thumb {
+        background: color-mix(in srgb, var(--content-meta) 30%, transparent);
+        border-radius: 999px;
+    }
+
+    .tag-scroll-limited::-webkit-scrollbar-thumb:hover {
+        background: color-mix(in srgb, var(--content-meta) 55%, transparent);
+    }
+</style>
 
 <script>
 	// 贪心装箱：行内放不下长标签时，用后面的短标签补足空隙，让标签云尽可能铺满
@@ -111,9 +159,10 @@ const style = Astro.props.style;
 
 <script>
 	// Swup 无刷新导航只替换 main 与 #toc，侧栏组件不会重新渲染，
-	// 标签块「文章页 top / 非文章页 sticky」的定位会停留在旧页面的状态。
-	// 这里依据当前页面目录是否为空（目录为空即非文章页），把标签块移到正确的列：
-	// 非文章页（如主页）→ sticky 列，随页面下翻留住；文章页 → top 列，随滚动滚出视野。
+	// 标签块「定位」与「是否限高」会停留在旧页面的状态。这里依据当前页面目录是否为空
+	// （目录为空即非文章页）同步两件事：
+	//   定位：非文章页（如主页）→ sticky 列，随页面下翻留住；文章页 → top 列，随滚动滚出视野
+	//   限高：非文章页 → 完整展示；文章页 → 限高到 MAX_VISIBLE_TAG_ROWS 行并显示滚动条
 	function syncTagsPosition() {
 		const tagsEl = document.querySelector('widget-layout[data-id="tags"]');
 		if (!tagsEl) return;
@@ -133,10 +182,20 @@ const style = Astro.props.style;
 		} else if (tagsEl.parentElement !== topCol) {
 			topCol.appendChild(tagsEl);
 		}
+
+		const scroller = tagsEl.querySelector<HTMLElement>("[data-tag-scroll]");
+		if (!scroller) return;
+		if (tocEmpty) {
+			scroller.style.removeProperty("max-height");
+			scroller.classList.remove("tag-scroll-limited");
+		} else {
+			scroller.style.setProperty("max-height", scroller.dataset.maxHeight ?? "");
+			scroller.classList.add("tag-scroll-limited");
+		}
 	}
 
 	const setupTagsPositionSync = () => {
-		// 首次加载时同步一次（此时 SSR 已就位，通常不移动，幂等）
+		// 首次加载时同步一次（此时 SSR 已就位，幂等）
 		syncTagsPosition();
 		window.swup.hooks.on("content:replace", syncTagsPosition);
 		window.swup.hooks.on("page:view", syncTagsPosition);

@@ -7,8 +7,6 @@
   draft: false,
 ))<frontmatter>
 
-#html.elem("p", attrs: (style: "margin-top: -1em;")) 
-
 == 预备概念
 
 === 理解 “函数”

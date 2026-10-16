@@ -5,7 +5,11 @@ import WidgetLayout from "./WidgetLayout.astro";
 
 const categories = await getCategoryList();
 
-const COLLAPSED_HEIGHT = "7.5rem";
+/** 同时显示的分类个数，超出的部分滚动查看。改这个数即可调整可见数量 */
+const MAX_VISIBLE_CATEGORIES = 3;
+/** 单个分类项高度（rem），对应 ButtonLink 的 h-10；改按钮高度时需同步改这里 */
+const CATEGORY_ITEM_HEIGHT_REM = 2.5;
+const COLLAPSED_HEIGHT = `${MAX_VISIBLE_CATEGORIES * CATEGORY_ITEM_HEIGHT_REM}rem`;
 const COLLAPSE_THRESHOLD = 10;
 
 const isCollapsed = categories.length >= COLLAPSE_THRESHOLD;
@@ -21,7 +25,7 @@ const style = Astro.props.style;
 <WidgetLayout name="分类" id="categories" isCollapsed={isCollapsed} collapsedHeight={COLLAPSED_HEIGHT}
                 class={className} style={style}
 >
-    <div class="category-scroll">
+    <div class="category-scroll" style={`max-height: ${COLLAPSED_HEIGHT}`}>
         {categories.map((c) =>
             <ButtonLink
                 url={c.url}
@@ -35,9 +39,8 @@ const style = Astro.props.style;
 </WidgetLayout>
 
 <style>
-    /* 滚动条样式与音乐播放列表一致 */
+    /* 滚动条样式与音乐播放列表一致（高度由 frontmatter 的 MAX_VISIBLE_CATEGORIES 决定，见内联 style） */
     .category-scroll {
-        max-height: 7.5rem;
         overflow-y: auto;
         padding-right: 6px;
         scrollbar-width: thin;

@@ -7,8 +7,6 @@ category: 学习笔记
 draft: false
 ---
 
-<p style="margin-top: -1em;"></p>
-
 ## Python的异常处理
 
 ```python

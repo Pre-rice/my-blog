@@ -7,8 +7,6 @@
   draft: true,
 ))<frontmatter>
 
-#html.elem("p", attrs: (style: "margin-top: 2em;")) 
-
 想不到吧，还是这个机器！同一情境，却是完全不同的问题！
 
 > 前置知识：使用概率密度函数描述连续型随机变量，换元积分法与分部积分法。（推荐学习）

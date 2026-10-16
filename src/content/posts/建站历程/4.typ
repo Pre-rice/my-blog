@@ -2,12 +2,10 @@
   title: "对博客进行简单改造",
   published: "2026-08-01-3",
   description: "建站历程 - 其四",
-  tags: ("个人博客", "Fuwari", "Giscus", "Mizuki"),
+  tags: ("个人博客", "Fuwari"),
   category: "建站历程",
   draft: false,
 ))<frontmatter>
-
-#html.elem("p", attrs: (style: "margin-top: -1em;"))
 
 == 给你的 Fuwari 添加新的页面
 

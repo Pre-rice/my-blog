@@ -7,8 +7,6 @@
   draft: false,
 ))<frontmatter>
 
-#html.elem("p", attrs: (style: "margin-top: -1em;"))
-
 == 数学基础
 
 === 傅里叶分析：时域与频域的桥梁

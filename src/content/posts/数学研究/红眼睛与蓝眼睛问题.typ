@@ -7,8 +7,6 @@
   draft: false,
 ))<frontmatter>
 
-#html.elem("p", attrs: (style: "margin-top: 2em;")) 
-
 > 本文暂只描述问题，不给出回答。
 
 === 情境

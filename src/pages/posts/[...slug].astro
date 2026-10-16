@@ -125,6 +125,9 @@ const jsonLd = {
 
             <Markdown class={`mb-6 markdown-content onload-animation${isTyp ? " typst-content" : ""}`}
                       headingSlugs={isTyp ? headings.map((h) => h.slug) : undefined}>
+                {/* 正文首元素与文章头部之间的间距微调（原先靠文章里手写一个空 <p> 实现）：
+                    二级标题开头 -1em、文字开头 2em，具体由 markdown.css 里按首个元素类型选择 */}
+                <p class="post-top-spacing"></p>
                 <Content />
             </Markdown>
 
