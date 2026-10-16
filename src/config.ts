@@ -165,7 +165,7 @@ export const musicPlayerConfig: MusicPlayerConfig = {
 	server: "tencent",
 	// 内容类型：playlist 歌单（默认） / song 单曲 / album 专辑 / artist 歌手 / search 搜索
 	type: "playlist",
-	// 歌单数据来源：现为静态文件（由 scripts/fetch-playlist.mjs 生成），同源加载，永不失败。
+	// 歌单数据来源：现为静态文件（由 src/plugins/fetch-playlist.mjs 生成），同源加载，永不失败。
 	// 想切回在线 Meting API 时，改回形如 https://xxx/api?server=:server&type=:type&id=:id&auth=:auth&r=:r 的地址即可。
 	api: "/music/playlist.json",
 	// local 模式配置
