@@ -1,11 +1,13 @@
 #metadata((
   title: "Theory of Computation Quick Reference Notes",
-  published: "2026-09-29",
-  description: "计算理论基础重点知识整理",
+  published: "2026-10-17",
+  description: "【计算理论基础】重点知识整理",
   tags: ("计算理论",),
   category: "学习笔记",
-  draft: true,
+  draft: false,
 ))<frontmatter>
+
+> 持续更新中。
 
 == Theory of Computation
 - (Models) What is computation?
