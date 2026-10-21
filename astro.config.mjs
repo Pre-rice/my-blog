@@ -20,7 +20,6 @@ import remarkSectionize from "remark-sectionize";
 import { expressiveCodeConfig } from "./src/config.ts";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
-import { musicMetadata } from "./src/plugins/music-metadata.mjs";
 import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
 import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
@@ -118,7 +117,6 @@ export default defineConfig({
 			htmlMode: "text", // 直接内嵌 body HTML，避免 hast 模式的 <body> 嵌套与公式 <img> 化
 		}),
 		sitemap(),
-		musicMetadata(),
 	],
 	markdown: {
 		remarkPlugins: [

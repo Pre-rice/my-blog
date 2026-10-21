@@ -1,7 +1,7 @@
 /**
- * 音乐播放器构建时元数据识别（Astro 集成）
+ * 音乐播放器元数据识别（手动脚本）
  *
- * 在 dev / build / check 加载配置时自动执行：
+ * 手动运行 `pnpm music`（即 node src/plugins/music-metadata.mjs）时执行：
  *   1. 扫描 public/music/url/ 下的所有音频文件；
  *   2. 读取 src/config.ts 中 musicPlayerConfig.localPlaylist 的条目作为“覆盖项”
  *      （同 url 的条目：id 及已填写的 title/artist/cover/duration 优先）；
@@ -10,7 +10,7 @@
  *   4. 将最终播放列表写入
  *      src/components/widget/music-sidebar/music-playlist.generated.ts。
  *
- * 也可直接运行：node src/plugins/music-metadata.mjs
+ * dev / build 不再自动执行，改动音频或 localPlaylist 后需手动重新运行。
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -326,8 +326,8 @@ async function generatePlaylist() {
 
 	// 写入生成文件
 	const lines = [
-		"// 本文件由 src/plugins/music-metadata.mjs 在构建时自动生成，请勿手动编辑。",
-		"// 修改 src/config.ts 中的 localPlaylist 或更换音频文件后，重新构建即可自动更新。",
+		"// 本文件由 src/plugins/music-metadata.mjs 生成（pnpm music），请勿手动编辑。",
+		"// 修改 src/config.ts 中的 localPlaylist 或更换音频文件后，重新运行 pnpm music 即可更新。",
 		'import type { Song } from "../../../types/music";',
 		"",
 		"export const musicPlaylist: Song[] = [",
@@ -352,23 +352,7 @@ async function generatePlaylist() {
 	);
 }
 
-/** Astro 集成：dev / build / check 加载配置时自动识别。 */
-export function musicMetadata() {
-	return {
-		name: "music-metadata",
-		hooks: {
-			async "astro:config:setup"() {
-				try {
-					await generatePlaylist();
-				} catch (error) {
-					console.error("[music-metadata] 执行失败：", error);
-				}
-			},
-		},
-	};
-}
-
-// 直接运行：node src/plugins/music-metadata.mjs
+// 直接运行：node src/plugins/music-metadata.mjs（或 pnpm music）
 const THIS_FILE = fileURLToPath(import.meta.url);
 const isMain =
 	process.argv[1] && path.resolve(process.argv[1]) === path.resolve(THIS_FILE);

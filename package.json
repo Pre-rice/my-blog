@@ -7,7 +7,7 @@
     "start": "astro dev",
     "check": "astro check",
     "build": "astro build && pagefind --site dist",
-    "playlist": "node src/plugins/fetch-playlist.mjs",
+    "music": "node src/plugins/music-metadata.mjs && node src/plugins/fetch-playlist.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "tsc --noEmit --isolatedDeclarations",

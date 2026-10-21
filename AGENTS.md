@@ -11,7 +11,8 @@
 | 命令 | 用途 |
 |---|---|
 | `pnpm dev` | 开发服务器（日常主流程） |
-| `pnpm build` | 生成歌单 + 构建 + Pagefind 索引 |
+| `pnpm build` | 构建 + Pagefind 索引 |
+| `pnpm music` | 手动更新音乐数据（本地音频元数据 + QQ 歌单） |
 | `pnpm preview` | 预览构建产物 |
 | `pnpm check` | Astro 类型检查 |
 | `pnpm type-check` | 严格类型检查（`--isolatedDeclarations`） |
@@ -63,9 +64,9 @@
 ## 7. 规范与质量
 
 - 改动后至少跑 `pnpm check` + `pnpm lint`。
-- Biome 严格：tab 缩进、双引号、organizeImports，style 组全 error；对 svelte/astro/vue 仅豁免 useConst、useImportType、noUnusedVariables、noUnusedImports。忽略 `src/**/*.css`、`dist/`、`node_modules/`、`music-playlist.generated.ts`（构建自动生成，勿手改）。
+- Biome 严格：tab 缩进、双引号、organizeImports，style 组全 error；对 svelte/astro/vue 仅豁免 useConst、useImportType、noUnusedVariables、noUnusedImports。忽略 `src/**/*.css`、`dist/`、`node_modules/`、`music-playlist.generated.ts`（`pnpm music` 生成，勿手改）。
 
 ## 8. 部署
 
 - `site` 为 `https://prerice.novic.cc/`；`trailingSlash: "always"`，内部链接注意尾部斜杠。
-- 音乐歌单为静态文件 `public/music/playlist.json`（本地 `node src/plugins/fetch-playlist.mjs` 生成后提交 git，构建时不再自动生成——Vercel 构建环境访问 QQ vkey 接口受限），播放时按 `songmid` 实时解析 QQ 音乐地址。
+- 音乐数据统一 `pnpm music` 手动生成（`music-playlist.generated.ts` 本地音频元数据 + `public/music/playlist.json` 歌单），dev / build 均不自动执行；生成后提交 git（Vercel 构建环境访问 QQ vkey 接口受限）。播放时按 `songmid` 实时解析 QQ 音乐地址。

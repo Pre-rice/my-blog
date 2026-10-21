@@ -6,11 +6,24 @@
 
 ```
 public/music/
-├── playlist.json  # 歌单数据源（meting 模式），由 pnpm playlist 生成，已纳入 git
+├── playlist.json  # 歌单数据源（meting 模式），由 pnpm music 生成，已纳入 git
 ├── url/           # 音频文件（.mp3 等，仅 local 模式使用，按需创建）
-├── cover/         # 封面图片（仅 local 模式使用，构建时自动提取）
+├── cover/         # 封面图片（仅 local 模式使用，由 pnpm music 自动提取）
 └── README.md      # 本文件
 ```
+
+## 更新音乐数据（统一手动执行）
+
+**dev / build 都不会自动生成任何音乐数据**，改完歌单或本地音频后手动跑一次：
+
+```bash
+pnpm music
+```
+
+它依次执行两个脚本，一次更新全部音乐数据：
+
+1. `src/plugins/music-metadata.mjs`：扫描 `url/` 音频 → 识别标题/歌手/封面/时长 → 生成 `src/components/widget/music-sidebar/music-playlist.generated.ts`
+2. `src/plugins/fetch-playlist.mjs`：抓取 QQ 歌单 → 生成 `public/music/playlist.json`
 
 ## 更新歌单（常用）
 
@@ -20,10 +33,10 @@ public/music/
 2. 在项目根目录运行：
 
    ```bash
-   pnpm playlist
+   pnpm music
    ```
 
-   等价完整命令：`node src/plugins/fetch-playlist.mjs [歌单ID]`
+   等价完整命令：`node src/plugins/music-metadata.mjs && node src/plugins/fetch-playlist.mjs [歌单ID]`
 3. **确认输出里有 `完成：N 首可播放`** —— 只有看到这一行才算更新成功
 4. 提交并推送，线上重新部署后才生效：
 
@@ -39,7 +52,7 @@ public/music/
 >
 > ⚠️ 只跑脚本不 `git push`，线上永远不会变。构建流程里**刻意没有**生成歌单这一步：Vercel 构建环境访问 QQ vkey 接口受限，在那里生成会只剩极少数歌。
 
-换歌单：`pnpm playlist <新歌单ID>`，同时把 `src/config.ts` 里的 `id` 一并改掉，之后直接 `pnpm playlist` 即可。
+换歌单：`node src/plugins/fetch-playlist.mjs <新歌单ID>`，同时把 `src/config.ts` 里的 `id` 一并改掉，之后直接 `pnpm music` 即可。
 
 `playlist.json` 每首形如：
 
@@ -54,9 +67,9 @@ public/music/
 把 `src/config.ts` 的 `musicPlayerConfig.mode` 改为 `"local"` 后，播放器改用本地文件。
 
 1. 将音频文件放入 `public/music/url/`（如 `example.mp3`）
-2. 重新运行 `pnpm dev` / `pnpm build`
+2. 运行 `pnpm music`
 
-构建时（`src/plugins/music-metadata.mjs`）会自动扫描该目录，并识别每首歌的：
+`pnpm music` 里的 `src/plugins/music-metadata.mjs` 会扫描该目录，并识别每首歌的：
 
 - 标题（音频元数据中的 title，识别不到则用文件名）
 - 歌手（元数据中的 artist / albumartist）
@@ -81,7 +94,7 @@ localPlaylist: [
 ```
 
 > 提示：播放顺序默认按文件名排序；需要调整可给文件名加序号前缀（如 `01_xxx.mp3`）。
-> 注意：改动配置或音频文件后，需重新运行 `pnpm dev` / `pnpm build`。
+> 注意：改动配置或音频文件后，需重新运行 `pnpm music`。
 
 ## 配置入口
 

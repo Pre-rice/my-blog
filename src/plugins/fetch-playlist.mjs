@@ -9,7 +9,8 @@
  * 保证歌单里每首都可播放，前端无需再运行时剔除。
  *
  * 仅本机手动运行（构建时不再自动调用——Vercel 构建环境访问 QQ vkey 接口受限，会只剩极少数歌）：
- *   node src/plugins/fetch-playlist.mjs [歌单ID]   （歌单ID 默认 5715312555）
+ *   pnpm music                                   （推荐：同时更新本地音频元数据 + 歌单）
+ *   node src/plugins/fetch-playlist.mjs [歌单ID] （只更新歌单，歌单ID 默认 5715312555）
  *
  * 生成后需提交 git，线上构建直接使用仓库里的文件。容错：生成失败时若已存在 playlist.json 则复用旧文件。
  */
